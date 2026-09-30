@@ -8,13 +8,13 @@ indicating a backdoor.
 
 from __future__ import annotations
 
-from typing import Any, ClassVar
+from typing import ClassVar
 
 import numpy as np
 
 from cvassure.core.detector import AuditContext, Detector, DetectorResult
 from cvassure.core.finding import Finding, LinkHints, TriggerHint
-from cvassure.core.imaging import RED, write_png
+from cvassure.core.imaging import write_png
 
 
 class ReconstructionDetector(Detector):
@@ -70,14 +70,10 @@ class ReconstructionDetector(Detector):
         mad = float(np.median(np.abs(norms - median)))
         threshold = median - 2.0 * mad
 
-        flagged_classes = [
-            cid for cid, norm in mask_norms.items() if norm < threshold
-        ]
+        flagged_classes = [cid for cid, norm in mask_norms.items() if norm < threshold]
 
         if not flagged_classes:
-            res.summary = (
-                f"reconstructed {len(mask_norms)} classes, no anomalously small triggers"
-            )
+            res.summary = f"reconstructed {len(mask_norms)} classes, no anomalously small triggers"
             return res
 
         # Report the most anomalous class
@@ -160,7 +156,7 @@ class ReconstructionDetector(Detector):
         lr = 0.1
         n_steps = 50
 
-        for step in range(n_steps):
+        for _step in range(n_steps):
             # Apply mask
             masked = images + mask[None]
 
@@ -231,9 +227,6 @@ class ReconstructionDetector(Detector):
         else:
             normalized = np.zeros_like(mask_mean)
         # Use red channel for the heatmap
-        pixels = [
-            [(int(normalized[y, x] * 255), 0, 0) for x in range(w)]
-            for y in range(h)
-        ]
+        pixels = [[(int(normalized[y, x] * 255), 0, 0) for x in range(w)] for y in range(h)]
         out_path = ctx.out_dir / rel_path
         write_png(out_path, w, h, pixels)

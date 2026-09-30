@@ -5,9 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-import numpy as np
-
-from cvassure.core.detector import AuditContext, DetectorResult
+from cvassure.core.detector import AuditContext
 from cvassure.core.finding import validate_finding
 from cvassure.model_integrity.fingerprint import FingerprintDetector
 from cvassure.model_integrity.wrapper import CvModelWrapper
@@ -83,7 +81,7 @@ def test_fingerprint_detects_model_swap(tmp_path: Path) -> None:
 
 def test_finding_validates() -> None:
     """The finding emitted by the detector must pass schema validation."""
-    from cvassure.core.finding import Finding, Tag
+    from cvassure.core.finding import Finding
 
     f = Finding.draft(
         asset="model",

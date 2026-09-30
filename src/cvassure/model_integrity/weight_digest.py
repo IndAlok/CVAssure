@@ -6,8 +6,7 @@ file. Emits a ``weight_digest_mismatch`` finding when they differ.
 
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Any, ClassVar
+from typing import ClassVar
 
 from cvassure.core.detector import AuditContext, Detector, DetectorResult
 from cvassure.core.finding import Finding
