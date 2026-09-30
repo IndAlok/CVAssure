@@ -117,9 +117,7 @@ def main() -> None:
     train_set = torchvision.datasets.CIFAR10(
         root="./data", train=True, download=True, transform=transform
     )
-    train_loader = torch.utils.data.DataLoader(
-        train_set, batch_size=args.batch_size, shuffle=True
-    )
+    train_loader = torch.utils.data.DataLoader(train_set, batch_size=args.batch_size, shuffle=True)
 
     # Train clean model
     print("Training clean model...")

@@ -5,8 +5,6 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-import numpy as np
-
 from cvassure.core.detector import AuditContext
 from cvassure.core.finding import validate_finding
 from cvassure.model_integrity.trigger_sweep import TriggerSweepDetector
@@ -74,7 +72,9 @@ def test_trigger_sweep_detects_known_patch(tmp_path: Path) -> None:
     res = det.run(ctx)
     # Without a real backend, predict returns Unavailable, so the sweep skips
     if res.status == "skipped":
-        assert "unavailable" in res.skipped_reason.lower() or "predict" in res.skipped_reason.lower()
+        assert (
+            "unavailable" in res.skipped_reason.lower() or "predict" in res.skipped_reason.lower()
+        )
 
 
 def test_trigger_sweep_finding_has_link_hints() -> None:
@@ -100,7 +100,9 @@ def test_trigger_sweep_finding_has_link_hints() -> None:
         ),
         metadata={"patch_id": "P-03", "attack_success_rate": 0.85},
     )
-    validated = validate_finding(f.to_final("F-001").model_dump(), detector_id="model.trigger_sweep")
+    validated = validate_finding(
+        f.to_final("F-001").model_dump(), detector_id="model.trigger_sweep"
+    )
     assert validated.link_hints is not None
     assert validated.link_hints.trigger.kind == "patch_library"
     assert validated.link_hints.trigger.patch_id == "P-03"

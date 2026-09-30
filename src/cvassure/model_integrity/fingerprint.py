@@ -7,7 +7,7 @@ swaps by identifying when the fingerprint changes.
 
 from __future__ import annotations
 
-from typing import Any, ClassVar
+from typing import ClassVar
 
 import numpy as np
 

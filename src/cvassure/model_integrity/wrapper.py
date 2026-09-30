@@ -215,8 +215,10 @@ class CvModelWrapper:
             else:
                 outputs = self._session.run(None, {input_name: np.asarray(batch)})
             # Return all outputs (including intermediates if the graph has them)
-            return np.concatenate([np.asarray(o).flatten() for o in outputs]) if outputs else Unavailable(
-                "ONNX session returned no outputs"
+            return (
+                np.concatenate([np.asarray(o).flatten() for o in outputs])
+                if outputs
+                else Unavailable("ONNX session returned no outputs")
             )
         except Exception as exc:
             return Unavailable(f"ONNX feature extraction failed: {type(exc).__name__}: {exc}")
@@ -271,9 +273,7 @@ class CvModelWrapper:
             return self._gradients_torch(batch)
         if self._backend == "onnxruntime":
             return Unavailable("ONNX Runtime does not support gradient computation")
-        return Unavailable(
-            "No model backend available. Install torch for gradient computation."
-        )
+        return Unavailable("No model backend available. Install torch for gradient computation.")
 
     def _gradients_torch(self, batch: Any) -> Any:
         """PyTorch gradient computation."""
