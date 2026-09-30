@@ -1,0 +1,38 @@
+{
+  "schema_version": "1.0",
+  "id": "F-001",
+  "asset": "data",
+  "reason": "patch trigger matches library entry P-03 on 3 samples from one contributor",
+  "evidence": ["evidence/data_patch_C-07.png"],
+  "severity": 0.9,
+  "confidence": 0.85,
+  "access_level": "not-applicable",
+  "limitations": "Patch library covers 1 known trigger. Novel triggers are out of scope.",
+  "disposition": "quarantine",
+  "linked_findings": ["F-019"],
+  "detector": { "id": "data.patch_trigger", "version": "0.1.0", "owner": "P2" },
+  "source_id": "C-07",
+  "class_label": 0,
+  "sample_ids": ["s-0001", "s-0002", "s-0003"],
+  "sample_count": 3,
+  "tags": ["patch_trigger"],
+  "link_hints": {
+    "target_class": 0,
+    "source_id": "C-07",
+    "trigger": { "kind": "patch_library", "patch_id": "P-03" },
+    "location_bbox": [0.1, 0.1, 0.3, 0.3],
+    "patch_template_path": "evidence/patch_P-03.png"
+  },
+  "escalation": {
+    "escalated": false,
+    "severity_before": 0.9,
+    "linked_to": [],
+    "method": "none"
+  },
+  "policy": {
+    "rule_id": "R1-quarantine-high-data",
+    "policy_hash": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "stub": false,
+  "metadata": { "iou": 0.94, "n_samples_checked": 3 }
+}

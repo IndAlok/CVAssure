@@ -1,0 +1,36 @@
+{
+  "schema_version": "1.0",
+  "id": "F-019",
+  "asset": "model",
+  "reason": "white-box trigger sweep hit at 0.71 on class 0, matches data patch P-03",
+  "evidence": ["evidence/model_sweep.json", "evidence/model_mask.png"],
+  "severity": 0.95,
+  "confidence": 0.8,
+  "access_level": "white-box",
+  "limitations": "Neural Cleanse style mask. Falses not characterised. No weights re-trained.",
+  "disposition": "review",
+  "linked_findings": ["F-001"],
+  "detector": { "id": "model.trigger_sweep", "version": "0.1.0", "owner": "P3" },
+  "class_label": 0,
+  "sample_ids": [],
+  "sample_count": 1,
+  "tags": ["trigger_sweep_hit"],
+  "link_hints": {
+    "target_class": 0,
+    "trigger": { "kind": "reconstructed", "mask_path": "evidence/model_mask.png" },
+    "location_bbox": [0.12, 0.11, 0.28, 0.29],
+    "patch_template_path": "evidence/model_pattern.png"
+  },
+  "escalation": {
+    "escalated": true,
+    "severity_before": 0.71,
+    "linked_to": ["F-001"],
+    "method": "noisy-or"
+  },
+  "policy": {
+    "rule_id": "R5-review-linked-model",
+    "policy_hash": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "stub": false,
+  "metadata": { "sweep_r": 0.71, "pattern_similarity": 0.88 }
+}

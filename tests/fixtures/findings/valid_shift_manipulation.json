@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0",
+  "id": "F-060",
+  "asset": "shift",
+  "reason": "batch B-3 shows a localised high-frequency patch signature, not a global shift",
+  "evidence": ["evidence/shift_B-3.png"],
+  "severity": 0.75,
+  "confidence": 0.65,
+  "access_level": "not-applicable",
+  "limitations": "Spectral split is heuristic. A sensor fault could look the same.",
+  "disposition": "quarantine",
+  "linked_findings": [],
+  "detector": { "id": "shift.manipulation", "version": "0.1.0", "owner": "P5" },
+  "batch_id": "B-3",
+  "sample_count": 40,
+  "tags": ["manipulation"],
+  "stub": false,
+  "metadata": { "psi": 0.18, "spectral_peak": 0.62 }
+}

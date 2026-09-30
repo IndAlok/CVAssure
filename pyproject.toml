@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cvassure"
+version = "0.1.0"
+description = "Offline computer-vision integrity assurance for data, models and inference records"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic>=2.7,<3",
+    "PyYAML>=6,<7",
+    "jsonschema>=4.21,<5",
+    "typer>=0.12,<1",
+    "rich>=13,<15",
+    "numpy>=1.26,<3",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8,<9",
+    "ruff>=0.6",
+    "pytest-socket>=0.7",
+]
+
+[project.scripts]
+cvassure = "cvassure.core.cli:app"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+cvassure = ["py.typed"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "C4", "SIM"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["E501"]
+"scripts/make_images.py" = ["E501"]
+# B008: `typer.Option(...)` in an argument default is typer's required idiom, not
+# a mutable-default bug. Rewriting it to satisfy the rule would break the CLI.
+"src/cvassure/core/cli.py" = ["B008"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+filterwarnings = ["error::DeprecationWarning:cvassure.*"]

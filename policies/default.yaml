@@ -1,0 +1,54 @@
+# CVAssure default policy. Declarative when/then. No code, no eval, no exec.
+#
+# Person 1 owns this file. Detectors may propose a disposition; THIS file decides.
+# The cut-offs below are STARTING VALUES, marked UNCALIBRATED in
+# docs/p1/DECISIONS.md. They get fitted on seeded data that includes negative
+# controls before any headline number is quoted.
+#
+# Do NOT put a contributor id, a class id, or a dataset name in a rule. The demo
+# story appears because the inputs contain it, not because the policy knows it.
+#
+# Operator set is closed: eq ne gte lte gt lt in contains.
+# An unknown field or operator is a config error and exit 2, never a silent skip.
+
+version: 1
+name: cvassure-default
+
+defaults:
+  # An emitted finding is never silent. No rule => review, never accept.
+  disposition: review
+
+precedence: [rejected, quarantine, review, accept]
+
+rules:
+  # High-severity, credible evidence in contributed data: pull the source.
+  - id: R1-quarantine-high-data
+    when: { asset: data, severity: { gte: 0.8 }, confidence: { gte: 0.6 } }
+    then: { disposition: quarantine, scope: source }
+
+  # A suspicious model is reviewed. A model is a single artefact, not a bulk
+  # pull, and mock-up 1B says REVIEW for the linked model finding.
+  - id: R2-review-model
+    when: { asset: model, severity: { gte: 0.5 } }
+    then: { disposition: review }
+
+  # A record that fails verification is not a judgement call.
+  - id: R3-reject-bad-records
+    when: { asset: records, tags: { contains: verification_failed } }
+    then: { disposition: rejected }
+
+  # Manipulation on a batch is not weather. Quarantine the batch.
+  - id: R4-quarantine-manipulation
+    when: { asset: shift, tags: { contains: manipulation } }
+    then: { disposition: quarantine, scope: batch }
+
+  # A model finding cross-linked to a quarantined source: review, and say so.
+  # The linker escalated the severity; this rule decides only the disposition.
+  - id: R5-review-linked-model
+    when: { asset: model, linked: { any: { disposition: quarantine } } }
+    then: { disposition: review, escalate: true }
+
+  # A crashed or skipped detector is never a clean result.
+  - id: R6-review-system
+    when: { asset: system }
+    then: { disposition: review }

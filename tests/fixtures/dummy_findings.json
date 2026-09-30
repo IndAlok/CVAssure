@@ -1,0 +1,304 @@
+{
+  "_comment": "SYNTHETIC. Copy of a day-2 stub run (seed 42). Person 4 may build the dashboard against this. Not a detection result: every finding here is stub: true.",
+  "_source": "cvassure audit --seed 42 on tests/fixtures/synthetic_scenario.py",
+  "findings": [
+    {
+      "access_level": "not-applicable",
+      "asset": "data",
+      "batch_id": null,
+      "class_label": 0,
+      "confidence": 0.6,
+      "detector": {
+        "id": "data.patch_trigger",
+        "owner": "P2",
+        "version": "0.1.0-stub"
+      },
+      "disposition": "quarantine",
+      "escalation": {
+        "escalated": false,
+        "linked_to": [
+          "F-002"
+        ],
+        "method": "link",
+        "severity_before": 0.9
+      },
+      "evidence": [
+        "evidence/stub_data_patch.png"
+      ],
+      "id": "F-001",
+      "limitations": "[STUB] Not a measurement. STUB: P2's detector has not landed, so this number is a fixture value chosen to exercise the pipeline, not a detection result.",
+      "link_hints": {
+        "location_bbox": [
+          0.1,
+          0.1,
+          0.3,
+          0.3
+        ],
+        "patch_template_path": "evidence/stub_patch_template.png",
+        "source_id": "C-07",
+        "target_class": 0,
+        "trigger": {
+          "kind": "patch_library",
+          "mask_path": null,
+          "patch_id": "P-03",
+          "pattern_path": null
+        }
+      },
+      "linked_findings": [
+        "F-002"
+      ],
+      "metadata": {
+        "fixture": true,
+        "stub": true
+      },
+      "policy": {
+        "policy_hash": "c407d19726ceae40e9aa6f1bcc6f1f84aae99797a6d70d0522bc588ad3531da6",
+        "rule_id": "R1-quarantine-high-data"
+      },
+      "reason": "[STUB] fixture patch trigger, source C-07, 1 of 8 samples carries patch P-03",
+      "sample_count": 1,
+      "sample_ids": [
+        "1",
+        "2",
+        "3"
+      ],
+      "schema_version": "1.0",
+      "severity": 0.9,
+      "source_id": "C-07",
+      "stub": true,
+      "tags": [
+        "patch_trigger"
+      ]
+    },
+    {
+      "access_level": "white-box",
+      "asset": "model",
+      "batch_id": null,
+      "class_label": 0,
+      "confidence": 0.6,
+      "detector": {
+        "id": "model.trigger_sweep",
+        "owner": "P3",
+        "version": "0.1.0-stub"
+      },
+      "disposition": "review",
+      "escalation": {
+        "escalated": true,
+        "linked_to": [
+          "F-001"
+        ],
+        "method": "noisy-or",
+        "severity_before": 0.7
+      },
+      "evidence": [
+        "evidence/stub_model_sweep.png"
+      ],
+      "id": "F-002",
+      "limitations": "[STUB] Not a measurement. STUB: P3's sweep has not landed. This is a fixture score, and no mask reconstruction was performed.",
+      "link_hints": {
+        "location_bbox": [
+          0.12,
+          0.11,
+          0.28,
+          0.29
+        ],
+        "patch_template_path": "evidence/stub_patch_template.png",
+        "source_id": null,
+        "target_class": 0,
+        "trigger": {
+          "kind": "patch_library",
+          "mask_path": null,
+          "patch_id": "P-03",
+          "pattern_path": null
+        }
+      },
+      "linked_findings": [
+        "F-001"
+      ],
+      "metadata": {
+        "fixture": true,
+        "stub": true,
+        "sweep_r": 0.71
+      },
+      "policy": {
+        "policy_hash": "c407d19726ceae40e9aa6f1bcc6f1f84aae99797a6d70d0522bc588ad3531da6",
+        "rule_id": "R5-review-linked-model"
+      },
+      "reason": "[STUB] fixture white-box library-patch sweep hit patch P-03 on class 0",
+      "sample_count": 1,
+      "sample_ids": [],
+      "schema_version": "1.0",
+      "severity": 0.97,
+      "source_id": null,
+      "stub": true,
+      "tags": [
+        "trigger_sweep_hit"
+      ]
+    },
+    {
+      "access_level": "not-applicable",
+      "asset": "records",
+      "batch_id": null,
+      "class_label": null,
+      "confidence": 0.5,
+      "detector": {
+        "id": "records.verify",
+        "owner": "P4",
+        "version": "0.1.0-stub"
+      },
+      "disposition": "rejected",
+      "escalation": null,
+      "evidence": [
+        "evidence/stub_record_rec-0007.png"
+      ],
+      "id": "F-003",
+      "limitations": "[STUB] Not a measurement. STUB: P4's chain has not landed, so nothing was actually verified. These records are presumed-bad fixture rows.",
+      "link_hints": null,
+      "linked_findings": [],
+      "metadata": {
+        "fixture": true,
+        "modification": "edited",
+        "stub": true
+      },
+      "policy": {
+        "policy_hash": "c407d19726ceae40e9aa6f1bcc6f1f84aae99797a6d70d0522bc588ad3531da6",
+        "rule_id": "R3-reject-bad-records"
+      },
+      "reason": "[STUB] fixture record rec-0007 edited, signature and sequence checks not performed",
+      "sample_count": 1,
+      "sample_ids": [
+        "rec-0007"
+      ],
+      "schema_version": "1.0",
+      "severity": 0.7,
+      "source_id": null,
+      "stub": true,
+      "tags": [
+        "verification_failed"
+      ]
+    },
+    {
+      "access_level": "not-applicable",
+      "asset": "records",
+      "batch_id": null,
+      "class_label": null,
+      "confidence": 0.5,
+      "detector": {
+        "id": "records.verify",
+        "owner": "P4",
+        "version": "0.1.0-stub"
+      },
+      "disposition": "rejected",
+      "escalation": null,
+      "evidence": [
+        "evidence/stub_record_rec-0012.png"
+      ],
+      "id": "F-004",
+      "limitations": "[STUB] Not a measurement. STUB: P4's chain has not landed, so nothing was actually verified. These records are presumed-bad fixture rows.",
+      "link_hints": null,
+      "linked_findings": [],
+      "metadata": {
+        "fixture": true,
+        "modification": "replayed",
+        "stub": true
+      },
+      "policy": {
+        "policy_hash": "c407d19726ceae40e9aa6f1bcc6f1f84aae99797a6d70d0522bc588ad3531da6",
+        "rule_id": "R3-reject-bad-records"
+      },
+      "reason": "[STUB] fixture record rec-0012 replayed, signature and sequence checks not performed",
+      "sample_count": 1,
+      "sample_ids": [
+        "rec-0012"
+      ],
+      "schema_version": "1.0",
+      "severity": 0.65,
+      "source_id": null,
+      "stub": true,
+      "tags": [
+        "verification_failed",
+        "replay"
+      ]
+    },
+    {
+      "access_level": "not-applicable",
+      "asset": "shift",
+      "batch_id": "B-2",
+      "class_label": null,
+      "confidence": 0.5,
+      "detector": {
+        "id": "shift.manipulation",
+        "owner": "P5",
+        "version": "0.1.0-stub"
+      },
+      "disposition": "quarantine",
+      "escalation": null,
+      "evidence": [
+        "evidence/stub_shift_manipulation.png"
+      ],
+      "id": "F-005",
+      "limitations": "[STUB] Not a measurement. STUB: P5's shift detectors have not landed. Drift and manipulation are not actually distinguished by any computed statistic here.",
+      "link_hints": null,
+      "linked_findings": [],
+      "metadata": {
+        "fixture": true,
+        "stub": true,
+        "verdict": "manipulation"
+      },
+      "policy": {
+        "policy_hash": "c407d19726ceae40e9aa6f1bcc6f1f84aae99797a6d70d0522bc588ad3531da6",
+        "rule_id": "R4-quarantine-manipulation"
+      },
+      "reason": "[STUB] fixture manipulation on batch B-2, localised rather than global shift",
+      "sample_count": null,
+      "sample_ids": [],
+      "schema_version": "1.0",
+      "severity": 0.75,
+      "source_id": null,
+      "stub": true,
+      "tags": [
+        "manipulation"
+      ]
+    },
+    {
+      "access_level": "not-applicable",
+      "asset": "shift",
+      "batch_id": "B-1",
+      "class_label": null,
+      "confidence": 0.5,
+      "detector": {
+        "id": "shift.natural",
+        "owner": "P5",
+        "version": "0.1.0-stub"
+      },
+      "disposition": "review",
+      "escalation": null,
+      "evidence": [
+        "evidence/stub_shift_drift.png"
+      ],
+      "id": "F-006",
+      "limitations": "[STUB] Not a measurement. STUB: P5's shift detectors have not landed. No MMD, KS or PSI was computed and no reference distribution was compared.",
+      "link_hints": null,
+      "linked_findings": [],
+      "metadata": {
+        "fixture": true,
+        "stub": true,
+        "verdict": "drift"
+      },
+      "policy": {
+        "policy_hash": "c407d19726ceae40e9aa6f1bcc6f1f84aae99797a6d70d0522bc588ad3531da6",
+        "rule_id": "default"
+      },
+      "reason": "[STUB] fixture drift on batch B-1, distribution stats not computed",
+      "sample_count": null,
+      "sample_ids": [],
+      "schema_version": "1.0",
+      "severity": 0.3,
+      "source_id": null,
+      "stub": true,
+      "tags": [
+        "drift"
+      ]
+    }
+  ]
+}

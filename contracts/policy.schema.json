@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cvassure.local/policy.schema.json",
+  "title": "CVAssure policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "name", "rules"],
+  "properties": {
+    "version": { "const": 1 },
+    "name": { "type": "string", "minLength": 1 },
+    "defaults": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "disposition": { "enum": ["accept", "review", "quarantine", "rejected"] }
+      }
+    },
+    "precedence": {
+      "type": "array",
+      "items": { "enum": ["rejected", "quarantine", "review", "accept"] },
+      "minItems": 4,
+      "maxItems": 4,
+      "uniqueItems": true
+    },
+    "rules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "when", "then"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "when": { "type": "object" },
+          "then": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "disposition": { "enum": ["accept", "review", "quarantine", "rejected"] },
+              "scope": { "enum": ["source", "batch", "sample", "record"] },
+              "escalate": { "type": "boolean" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

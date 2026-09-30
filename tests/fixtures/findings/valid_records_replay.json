@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0",
+  "id": "F-042",
+  "asset": "records",
+  "reason": "record 0012 replays nonce 9f2c at sequence 41, already consumed",
+  "evidence": ["evidence/record_0012.json"],
+  "severity": 0.65,
+  "confidence": 0.95,
+  "access_level": "not-applicable",
+  "limitations": "Detects replay within the logged window only. Outside it, replay is invisible.",
+  "disposition": "rejected",
+  "linked_findings": [],
+  "detector": { "id": "records.verify", "version": "0.1.0", "owner": "P4" },
+  "sample_ids": ["rec-0012"],
+  "sample_count": 1,
+  "tags": ["replay", "verification_failed"],
+  "stub": false,
+  "metadata": { "record_seq": 12, "duplicate_of_seq": 41 }
+}

@@ -1,0 +1,15 @@
+---
+description: Python constraints for this repo
+globs: **/*.py
+alwaysApply: false
+---
+
+# Python
+
+- Use the repo's runner (`pytest`, `unittest`, etc.) and existing `pyproject.toml` / `requirements` tooling.
+- Match typing style (gradual vs strict) of neighboring modules.
+- Do not introduce new dependencies without explicit approval.
+- Prefer pathlib and context managers where the codebase already does.
+- Avoid bare `except:`; follow existing logging patterns.
+- Virtualenv/poetry/uv: use whichever the repo documents in README or lockfiles.
+- Keep public API changes backward compatible unless the task says otherwise.

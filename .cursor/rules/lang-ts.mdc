@@ -1,0 +1,15 @@
+---
+description: TypeScript/JavaScript constraints for this repo
+globs: **/*.ts, **/*.tsx, **/*.js, **/*.jsx
+alwaysApply: false
+---
+
+# TypeScript / JavaScript
+
+- Use the repo's existing test runner and `npm`/`pnpm`/`yarn` scripts; do not add new test frameworks.
+- Prefer `async`/`await`; handle promise rejections at boundaries the repo already uses.
+- Avoid `any` unless the codebase already uses it for that layer; match strictness of nearby files.
+- Do not change `tsconfig`, bundler, or ESLint config unless the task requires it.
+- For DOM/browser APIs, verify types against current lib definitions rather than guessing.
+- Keep imports aligned with existing path aliases (`@/`, `~/`, etc.).
+- When adding exports, match named vs default export style of sibling files.

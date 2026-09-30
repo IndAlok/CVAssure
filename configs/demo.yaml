@@ -1,0 +1,36 @@
+version: 1
+name: cvassure-demo
+# Day-2 stub configuration. Real detector modules land as teammates merge.
+
+seed: 42
+access: white-box
+policy: policies/default.yaml
+
+detectors:
+  # Module list, loaded in this order after the entry-point group.
+  # Real module present => the stub with the same id is not loaded.
+  modules: []
+  # Explicit order for the CLI stage lines. A stub id not listed here still runs,
+  # at the end of its asset stage, flagged.
+  order:
+    - data.patch_trigger
+    - model.trigger_sweep
+    - records.verify
+    - shift.natural
+    - shift.manipulation
+
+timeouts:
+  default: 300
+
+adapters:
+  coco: cvassure.core.adapters:read_coco
+  yolo: cvassure.core.adapters:read_yolo
+
+link:
+  # STARTING VALUES. UNCALIBRATED until fitted on seeded data with negative
+  # controls. See docs/p1/DECISIONS.md section D.
+  tau_link: 0.50
+  identity: 0.5
+  overlap: 0.2
+  pattern: 0.3
+  calibration: UNCALIBRATED

@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "p*/*"]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: ${{ matrix.os }} py${{ matrix.python }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ["3.11"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Lint
+        run: |
+          python -m ruff check .
+          python -m ruff format --check .
+
+      - name: Schema is a valid draft 2020-12 document and matches the model
+        run: python -m pytest tests/core/test_finding.py -k "schema"
+
+      - name: Unit and integration tests
+        run: python -m pytest -q
+
+      - name: Tests with sockets blocked
+        run: python -m pytest tests/core -q --disable-socket --allow-unix-socket
+
+      - name: Import core without a heavy dependency
+        # torch/onnxruntime must never be needed to import the spine.
+        run: |
+          python -c "import sys, cvassure.core.finding, cvassure.core.detector; bad=[m for m in ('torch','onnxruntime','cv2','faiss') if m in sys.modules]; assert not bad, bad; print('core imports clean')"

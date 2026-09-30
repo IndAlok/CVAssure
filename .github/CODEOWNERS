@@ -1,0 +1,34 @@
+# Ownership. P2…P5 are placeholders until the team fills in GitHub handles.
+#
+# HUMAN TODO: replace P1..P5 with real handles. Until then these lines are
+# documentation, not enforcement. Person 1 enforces the rest by review.
+
+# Person 1 - lead, governance layer, spine
+*                       @P1
+/src/cvassure/core/     @P1
+/contracts/             @P1
+/policies/              @P1
+/configs/               @P1
+/tests/core/            @P1
+/tests/integration/     @P1
+/docs/p1/               @P1
+/scripts/               @P1
+/.github/               @P1
+
+# Person 2 - data integrity
+/src/cvassure/data_integrity/  @P2
+/contracts/EMBEDDINGS.md        @P2
+
+# Person 3 - model integrity
+/src/cvassure/model_integrity/  @P3
+/contracts/MODEL_WRAPPER.md     @P3
+
+# Person 4 - provenance, chain, report
+/src/cvassure/provenance/       @P4
+/contracts/RECORD.md           @P4
+/contracts/REPORT_INPUT.md     @P4
+
+# Person 5 - scenario generation, shift
+/src/cvassure/shift/            @P5
+/contracts/MANIFEST.md          @P5
+/contracts/RESULTS_TABLE.md     @P5

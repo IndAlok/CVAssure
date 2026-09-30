@@ -1,0 +1,47 @@
+# Coverage status rules (D11). Person 1 owns this file.
+#
+# Status is DERIVED from Person 5's results_table.csv by the rules below.
+# It is never hand-written. A class with no row is Untested, never Supported.
+#
+# A measured row NEVER flips a declared-Unsupported class. If one of the three
+# becomes measurable, that is a config change plus a CHANGELOG line, in front of
+# everyone, not a silent edit.
+
+version: 1
+name: cvassure-coverage-rules
+
+# STARTING VALUES. UNCALIBRATED.
+thresholds:
+  T_support: 0.80        # detection_rate_mean at or above this...
+  T_far: 0.05            # ...and clean-control false_alarm_rate at or below this...
+  min_seeds: 3           # ...and at least this many seeds.
+  calibration: UNCALIBRATED
+
+# Declared unsupported. Text here is the exact wording in the coverage statement.
+declared_unsupported:
+  - attack_class: Adaptive attackers
+    reason: An attacker who knows these detectors can choose a trigger this set does not look for.
+  - attack_class: Imperceptible clean-label perturbations
+    reason: Not detected by current methods. The seeded scenario does not attempt them.
+  - attack_class: Hardware / compiler backdoors
+    reason: Out of scope. The audit reads a model file, not a build or a device.
+
+# Classes the generator always knows about. No row => Untested.
+known_classes:
+  - Patch / blend trigger in data
+  - Label flipping
+  - Near-duplicate flooding
+  - OOD insertion
+  - Model substitution
+  - Backdoored model
+  - Record tampering / replay
+  - Natural shift (fog vs patch)
+  - Cross-asset linking
+
+# Assumptions printed with the coverage statement. Sourced, not decorative.
+assumptions:
+  - All development and evaluation data is publicly available under an applicable licence, or synthetic. No classified, operational, or service-generated data.
+  - NIST TrojAI benchmark artefacts, BackdoorBench, and other reproducible public backdoor or adversarial-machine-learning material are used as references for attack families only. They are not installed and no artefact from them is vendored.
+  - Baseline assessment does not retrain the contributed model. The subject model's weights are read and hashed, never updated.
+  - The audit runs offline and air-gapped. No cloud service, external API, or CDN is contacted.
+  - Thresholds in this file are UNCALIBRATED starting values and are not a validated detection capability.

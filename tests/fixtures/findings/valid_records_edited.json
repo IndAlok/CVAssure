@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0",
+  "id": "F-031",
+  "asset": "records",
+  "reason": "record 0007 edited after signing, output hash no longer matches input hash",
+  "evidence": ["evidence/record_0007.json"],
+  "severity": 0.7,
+  "confidence": 0.99,
+  "access_level": "not-applicable",
+  "limitations": "Detects post-hoc edit. Cannot prove who edited it or why.",
+  "disposition": "rejected",
+  "linked_findings": [],
+  "detector": { "id": "records.verify", "version": "0.1.0", "owner": "P4" },
+  "sample_ids": ["rec-0007"],
+  "sample_count": 1,
+  "tags": ["verification_failed"],
+  "stub": false,
+  "metadata": { "record_seq": 7, "field_mismatched": "output" }
+}

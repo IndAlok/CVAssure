@@ -1,0 +1,451 @@
+{
+  "$defs": {
+    "DetectorRef": {
+      "additionalProperties": false,
+      "description": "Who produced this. The pipeline fills it; detectors do not.",
+      "properties": {
+        "id": {
+          "minLength": 1,
+          "title": "Id",
+          "type": "string"
+        },
+        "owner": {
+          "minLength": 1,
+          "title": "Owner",
+          "type": "string"
+        },
+        "version": {
+          "minLength": 1,
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "version",
+        "owner"
+      ],
+      "title": "DetectorRef",
+      "type": "object"
+    },
+    "Escalation": {
+      "additionalProperties": false,
+      "description": "Written by the linker only. Records what the severity was before.",
+      "properties": {
+        "escalated": {
+          "title": "Escalated",
+          "type": "boolean"
+        },
+        "linked_to": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Linked To",
+          "type": "array"
+        },
+        "method": {
+          "minLength": 1,
+          "title": "Method",
+          "type": "string"
+        },
+        "severity_before": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Severity Before",
+          "type": "number"
+        }
+      },
+      "required": [
+        "escalated",
+        "severity_before",
+        "method"
+      ],
+      "title": "Escalation",
+      "type": "object"
+    },
+    "LinkHints": {
+      "additionalProperties": false,
+      "description": "Evidence the cross-asset linker reads. Never a verdict.\n\nP2 emits this on data findings tagged ``patch_trigger`` or ``blend_trigger``.\nP3 emits it on model findings tagged ``trigger_sweep_hit`` or\n``trigger_reconstructed``.",
+      "properties": {
+        "location_bbox": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Location Bbox"
+        },
+        "patch_template_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Patch Template Path"
+        },
+        "source_id": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Id"
+        },
+        "target_class": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Target Class"
+        },
+        "trigger": {
+          "$ref": "#/$defs/TriggerHint"
+        }
+      },
+      "required": [
+        "trigger"
+      ],
+      "title": "LinkHints",
+      "type": "object"
+    },
+    "PolicyRef": {
+      "additionalProperties": false,
+      "description": "Which rule decided the disposition. Written by the policy engine only.",
+      "properties": {
+        "policy_hash": {
+          "minLength": 1,
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Policy Hash",
+          "type": "string"
+        },
+        "rule_id": {
+          "minLength": 1,
+          "title": "Rule Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "rule_id",
+        "policy_hash"
+      ],
+      "title": "PolicyRef",
+      "type": "object"
+    },
+    "TriggerHint": {
+      "additionalProperties": false,
+      "description": "Which visual trigger a finding is about.\n\n``patch_library`` hints carry a ``patch_id`` from a known patch set.\n``reconstructed`` hints carry a mask, and optionally a pattern image.",
+      "properties": {
+        "kind": {
+          "enum": [
+            "patch_library",
+            "reconstructed"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "mask_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mask Path"
+        },
+        "patch_id": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Patch Id"
+        },
+        "pattern_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pattern Path"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "title": "TriggerHint",
+      "type": "object"
+    }
+  },
+  "$id": "https://cvassure.local/contracts/finding.draft.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "One assurance flag. Detector-proposed fields are filled by the pipeline. See contracts/FINDING.md.",
+  "properties": {
+    "access_level": {
+      "enum": [
+        "white-box",
+        "gray-box",
+        "black-box",
+        "not-applicable"
+      ],
+      "title": "Access Level",
+      "type": "string"
+    },
+    "asset": {
+      "enum": [
+        "data",
+        "model",
+        "records",
+        "shift",
+        "system"
+      ],
+      "title": "Asset",
+      "type": "string"
+    },
+    "batch_id": {
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Batch Id"
+    },
+    "class_label": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Class Label"
+    },
+    "confidence": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Confidence",
+      "type": "number"
+    },
+    "detector": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/DetectorRef"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "disposition": {
+      "enum": [
+        "accept",
+        "review",
+        "quarantine",
+        "rejected"
+      ],
+      "title": "Disposition",
+      "type": "string"
+    },
+    "escalation": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Escalation"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "evidence": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Evidence",
+      "type": "array"
+    },
+    "limitations": {
+      "minLength": 10,
+      "title": "Limitations",
+      "type": "string"
+    },
+    "link_hints": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/LinkHints"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "linked_findings": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 50,
+      "title": "Linked Findings",
+      "type": "array"
+    },
+    "metadata": {
+      "additionalProperties": true,
+      "title": "Metadata",
+      "type": "object"
+    },
+    "policy": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PolicyRef"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "reason": {
+      "maxLength": 300,
+      "minLength": 10,
+      "title": "Reason",
+      "type": "string"
+    },
+    "sample_count": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Sample Count"
+    },
+    "sample_ids": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 50,
+      "title": "Sample Ids",
+      "type": "array"
+    },
+    "schema_version": {
+      "const": "1.0",
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "severity": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Severity",
+      "type": "number"
+    },
+    "source_id": {
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Source Id"
+    },
+    "stub": {
+      "default": false,
+      "title": "Stub",
+      "type": "boolean"
+    },
+    "tags": {
+      "items": {
+        "enum": [
+          "patch_trigger",
+          "blend_trigger",
+          "label_flip",
+          "near_duplicate",
+          "ood",
+          "fingerprint_mismatch",
+          "weight_digest_mismatch",
+          "trigger_sweep_hit",
+          "trigger_reconstructed",
+          "verification_failed",
+          "replay",
+          "substitution",
+          "drift",
+          "manipulation",
+          "undetermined",
+          "skipped_access_tier"
+        ],
+        "type": "string"
+      },
+      "title": "Tags",
+      "type": "array"
+    }
+  },
+  "required": [
+    "schema_version",
+    "asset",
+    "reason",
+    "evidence",
+    "severity",
+    "confidence",
+    "access_level",
+    "limitations",
+    "disposition",
+    "linked_findings"
+  ],
+  "title": "CVAssure Finding (draft)",
+  "type": "object"
+}

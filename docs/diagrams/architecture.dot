@@ -1,0 +1,20 @@
+digraph cvassure {
+  rankdir=LR;
+  graph [fontname="Segoe UI", bgcolor="white", pad="0.4"];
+  node [shape=box, style="rounded,filled", fontname="Segoe UI", fontsize=11, color="#1F3864", fillcolor="white"];
+  edge [color="#0070C0"];
+
+  inputs [label="Inputs\nCOCO JSON / YOLO txt\nONNX / PyTorch\nJSON + Ed25519 records"];
+  adapters [label="Adapters and wrapper\nformat adapters\npredict / features / gradients\ndeclares access tier"];
+  detectors [label="Detector plugins\nData integrity (P2)\nModel integrity (P3)\nProvenance (P4)\nShift and drift (P5)"];
+  findings [label="Finding\nasset, reason, evidence\nseverity, confidence, access\nlimitations, disposition"];
+  link [label="Cross-asset linking (P1)\ntrigger matches contributor patch?"];
+  policy [label="YAML policy (P1)\naccept / review / quarantine / rejected"];
+  audit [label="Signed audit log (P1, P4)\nseeds, config hash, policy hash"];
+  report [label="Offline HTML report (P4)\nheatmap, gallery, QR hash"];
+  coverage [label="Coverage statement (P1)\ngenerated from P5 results"];
+
+  inputs -> adapters -> detectors -> findings -> link -> policy -> audit -> report;
+  findings -> coverage;
+  { rank=same; policy; audit; report; coverage; }
+}

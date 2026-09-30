@@ -1,0 +1,6 @@
+file	slide	caption
+p1_architecture.png	3	Three assets in, one uniform Finding object out, and the cross-asset link joining the data and model stories.
+p1_cli_run.png	4	One offline command finishes all five checks, links the model trigger to the patch seen in samples from C-07, and prints its own verified report hash.
+p1_coverage.png	6	Coverage is derived from measured numbers; the grey rows are things CVAssure does not claim to detect.
+p1_comparison.png	6	Every tool here covers one part of the lifecycle; none of them emit the joined report.
+p1_runtime_line.txt	4	Median 1.20 s over n=5 offline CPU runs (range 1.06-1.76 s) on Intel64 Family 6 Model 142 Stepping 9, GenuineIntel, 4 cores, 15.9 GB RAM, Windows 10 AMD64, Python 3.11.9, no GPU. Command: cvassure audit --data C:\Users\Admin\Desktop\cvassure\.demo_scratch\data --model C:\Users\Admin\Desktop\cvassure\.demo_scratch\model.onnx --records C:\Users\Admin\Desktop\cvassure\.demo_scratch\records.jsonl --out C:\Users\Admin\Desktop\cvassure\out --config C:\Users\Admin\Desktop\cvassure\configs\demo.yaml --coverage-rules C:\Users\Admin\Desktop\cvassure\configs\coverage_rules.yaml --seed 42 --plain --reproducible

@@ -1,0 +1,60 @@
+name: Nightly demo
+
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: nightly-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  demo:
+    name: ${{ matrix.os }} seed 42
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      # While any day-2 stub still runs, `--strict` exits 5 by design, so the
+      # nightly runs the stub path and only has to stay green. Drop this step's
+      # `if` and add --strict once the real detectors land.
+      - name: Regenerate seed 42 and audit it
+        run: python scripts/nightly_demo.py --out out
+
+      - name: Verify the chain and the report hashes
+        run: |
+          python -m cvassure.core.cli verify-log out/audit.log --manifest out/run_manifest.json
+          python -m cvassure.core.cli verify-report out/report.html --out out
+
+      - name: Assert the generated HTML is offline
+        shell: bash
+        run: |
+          if grep -Eq 'https?://' out/report.html; then
+            echo "report.html references a remote asset; the report must be offline" >&2
+            exit 1
+          fi
+
+      - name: Upload the run
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-${{ matrix.os }}
+          path: out/
+          if-no-files-found: warn
+          retention-days: 14

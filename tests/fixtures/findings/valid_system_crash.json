@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0",
+  "id": "F-090",
+  "asset": "system",
+  "reason": "detector data.spectral raised ValueError, stage continued without it",
+  "evidence": [],
+  "severity": 0.2,
+  "confidence": 1.0,
+  "access_level": "not-applicable",
+  "limitations": "The crash itself is the evidence. Spectral signatures were not computed at all.",
+  "disposition": "review",
+  "linked_findings": [],
+  "detector": { "id": "data.spectral", "version": "0.1.0", "owner": "P2" },
+  "tags": [],
+  "stub": false,
+  "metadata": {
+    "error_type": "ValueError",
+    "error_message": "covariance is not positive definite",
+    "detector_status": "error"
+  }
+}

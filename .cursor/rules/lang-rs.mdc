@@ -1,0 +1,15 @@
+---
+description: Rust constraints for this repo
+globs: **/*.rs
+alwaysApply: false
+---
+
+# Rust
+
+- Use `cargo test` / `cargo clippy` as documented in the repo; scope to one crate or module when possible.
+- Match error types (`thiserror`, `anyhow`, custom enums) already used in the crate.
+- Do not add dependencies to `Cargo.toml` without approval.
+- Prefer explicit `match` over panics for recoverable errors unless the crate is panic-by-design.
+- Keep `unsafe` out unless the codebase already uses it in that layer.
+- Follow existing async runtime (tokio/async-std) — do not mix runtimes.
+- Run `cargo fmt` expectations only if the repo CI enforces it.

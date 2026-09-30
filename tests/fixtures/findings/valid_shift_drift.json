@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0",
+  "id": "F-052",
+  "asset": "shift",
+  "reason": "batch B-2 fog shift, PSI 0.41 over haze channel, consistent with weather",
+  "evidence": ["evidence/shift_B-2.png"],
+  "severity": 0.3,
+  "confidence": 0.7,
+  "access_level": "not-applicable",
+  "limitations": "MMD/KS/PSI agree on direction. No ground truth for true cause.",
+  "disposition": "accept",
+  "linked_findings": [],
+  "detector": { "id": "shift.natural", "version": "0.1.0", "owner": "P5" },
+  "batch_id": "B-2",
+  "sample_count": 40,
+  "tags": ["drift"],
+  "stub": false,
+  "metadata": { "psi": 0.41, "mmd": 0.12, "ks_max": 0.37 }
+}
