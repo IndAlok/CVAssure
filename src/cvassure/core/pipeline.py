@@ -293,6 +293,8 @@ def run_audit(
     access: str | None = None,
     stages: Sequence[str] = STAGES,
     reproducible: bool = False,
+    privkey_path: Path | None = None,
+    pubkey_path: Path | None = None,
     emit: Callable[[str], None] = lambda _s: None,
 ) -> RunResult:
     """One full audit. Returns everything the CLI needs and writes `out/`."""
@@ -314,7 +316,12 @@ def run_audit(
     policy_file = policy_path or cfg.policy_path
 
     ts = f"1970-01-01T00:00:{run_seed % 60:02d}Z" if reproducible else None
-    chain: ChainBackend = make_chain(out_dir / "audit.log", deterministic_ts=ts)
+    chain: ChainBackend = make_chain(
+        out_dir / "audit.log",
+        deterministic_ts=ts,
+        privkey_path=privkey_path,
+        pubkey_path=pubkey_path,
+    )
     detector_errors: list[str] = []
 
     chain.append(
@@ -527,12 +534,16 @@ def run_audit(
         },
     )
     manifest["audit_head"] = chain.head()
+    manifest["chain_backend"] = type(chain).__name__
+    if hasattr(chain, "pubkey_fingerprint"):
+        manifest["signed"] = True
+        manifest["signer_fingerprint"] = chain.pubkey_fingerprint
+    if hasattr(chain, "merkle_root"):
+        manifest["merkle_root"] = chain.merkle_root()
 
     (out_dir / "run_manifest.json").write_text(canonical_json(manifest) + "\n", encoding="utf-8")
 
-    from cvassure.core.audit import verify_file
-
-    result = verify_file(out_dir / "audit.log", expected_head=chain.head())
+    chain_ok = chain.verify()
 
     stage_lines.extend(
         _stage_lines(
@@ -566,8 +577,8 @@ def run_audit(
         report_path=report_path,
         report_file_sha256=report_sha,
         payload_sha256=payload_sha256,
-        chain_ok=result.ok,
-        chain_head=result.head,
+        chain_ok=chain_ok,
+        chain_head=chain.head(),
         stub_ran=stub_ran,
         detector_errors=detector_errors,
         coverage_warning=cov.warning,
