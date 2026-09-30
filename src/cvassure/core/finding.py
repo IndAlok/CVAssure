@@ -304,9 +304,7 @@ def final_schema() -> dict[str, Any]:
     s["$schema"] = "https://json-schema.org/draft/2020-12/schema"
     s["$id"] = "https://cvassure.local/contracts/finding.schema.json"
     s["title"] = "CVAssure Finding"
-    s["description"] = (
-        "One assurance flag. Detector-proposed fields are filled by the pipeline."
-    )
+    s["description"] = "One assurance flag. Detector-proposed fields are filled by the pipeline."
     s["properties"]["id"] = {"type": "string", "pattern": ID_PATTERN}
     s["required"] = list(REQUIRED_FIELDS)
     return s

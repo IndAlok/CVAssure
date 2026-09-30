@@ -695,9 +695,7 @@ def test_detector_timeout_becomes_an_error_finding(tmp_path: Path) -> None:
         cache_dir=tmp_path / "cache",
         config={},
     )
-    result, err = _run_detector(
-        Loaded(detector=Slow(), module="t"), ctx, prior=(), timeout_s=0.2
-    )
+    result, err = _run_detector(Loaded(detector=Slow(), module="t"), ctx, prior=(), timeout_s=0.2)
     assert result.status == "error"
     assert err and "timeout" in err
     assert result.findings and result.findings[0].asset == "system"

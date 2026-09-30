@@ -155,10 +155,7 @@ class TriggerSweepStub(_StubBase):
                 severity=0.7,
                 confidence=0.6,
                 access_level=tier if tier != "not-applicable" else "white-box",
-                limitations=(
-                    "STUB: built-in fixture score. No "
-                    "mask reconstruction was performed."
-                ),
+                limitations=("STUB: built-in fixture score. No mask reconstruction was performed."),
                 disposition="review",
                 class_label=DEMO_CLASS,
                 sample_count=1,
