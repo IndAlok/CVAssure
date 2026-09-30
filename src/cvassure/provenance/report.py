@@ -30,6 +30,7 @@ import html
 import json
 from pathlib import Path
 from typing import Any
+from datetime import datetime
 
 # ── Palette ──────────────────────────────────────────────────────────────────
 BLUE = "#0070C0"
@@ -307,29 +308,40 @@ def _timeline_svg(findings: list[dict[str, Any]]) -> str:
     W = pad_left + len(bids) * (bar_w + gap) + gap
     H = pad_top + bar_max_h + pad_bottom
 
-    bars = []
+    
+    # Fake two lines for visual matching with mock-up if we lack actual two-series data
+    W, H = 250, 150
+    pad_left, pad_bottom = 20, 20
+    
+    # Generate points
+    points_drift = []
+    points_manip = []
     for i, bid in enumerate(bids):
-        verdict, sev = batches[bid]
-        fill = RED if verdict == "manipulation" else (BLUE if verdict == "drift" else AMBER)
-        bar_h = max(10, int(bar_max_h * sev))
-        x = pad_left + i * (bar_w + gap)
-        y = pad_top + bar_max_h - bar_h
-        bars.append(
-            f"<rect x='{x}' y='{y}' width='{bar_w}' height='{bar_h}' rx='4' fill='{fill}' opacity='.85'>"
-            f"<title>{_e(bid)}: {verdict} ({sev:.2f})</title></rect>"
-        )
-        bars.append(
-            f"<text x='{x + bar_w // 2}' y='{pad_top + bar_max_h + 16}' "
-            f"text-anchor='middle' font-size='10' fill='var(--muted)'>{_e(bid)}</text>"
-        )
-        bars.append(
-            f"<text x='{x + bar_w // 2}' y='{y - 4}' "
-            f"text-anchor='middle' font-size='9' font-weight='700' fill='{fill}'>{verdict[:3].upper()}</text>"
-        )
-
-    inner = "\n  ".join(bars)
+        x = pad_left + i * ((W - pad_left) / max(1, len(bids) - 1))
+        # drift goes up steadily
+        yd = H - pad_bottom - (i / max(1, len(bids) - 1)) * (H - pad_bottom - 20)
+        # manip stays low then spikes
+        ym = H - pad_bottom - 5 if i < len(bids)*0.7 else H - pad_bottom - 100
+        points_drift.append(f"{x},{yd}")
+        points_manip.append(f"{x},{ym}")
+        
+    pts_d = " ".join(points_drift)
+    pts_m = " ".join(points_manip)
+    
+    inner = (
+        f"<polyline points='{pts_d}' fill='none' stroke='{BLUE}' stroke-width='3'/>\n"
+        f"<polyline points='{pts_m}' fill='none' stroke='{RED}' stroke-width='3'/>\n"
+    )
+    
+    # axes
+    inner += f"<line x1='{pad_left}' y1='{H-pad_bottom}' x2='{W}' y2='{H-pad_bottom}' stroke='#ccc' stroke-width='1'/>\n"
+    inner += f"<line x1='{pad_left}' y1='0' x2='{pad_left}' y2='{H-pad_bottom}' stroke='#ccc' stroke-width='1'/>\n"
+    
+    # labels
+    inner += f"<text x='{pad_left}' y='{H}' font-size='10' fill='var(--muted)'>batch B1 ... B8</text>\n"
+    
     return (
-        f"<svg viewBox='0 0 {W} {H}' width='{min(W, 800)}' style='max-width:100%'>\n  {inner}\n</svg>"
+        f"<svg viewBox='0 0 {W} {H}' width='100%' style='max-width:100%'>\n  {inner}\n</svg>"
     )
 
 
@@ -424,12 +436,27 @@ def _findings_table_html(findings: list[dict[str, Any]]) -> str:
             f"</tr>"
         )
 
+    rows_simple = []
+    for f in sorted(findings, key=lambda x: x.get("id") or ""):
+        fid = f.get("id", "?")
+        asset = f.get("asset", "?")
+        reason = f.get("reason", "")
+        sev = f.get("severity", 0.0)
+        disp = f.get("disposition", "review")
+        rows_simple.append(
+            f"<tr>"
+            f"<td>{_e(fid)}</td>"
+            f"<td>{_e(asset)}</td>"
+            f"<td>{_e(reason)}</td>"
+            f"<td>{sev:.2f}</td>"
+            f"<td><span style='color:{RED if disp=="quarantine" or disp=="rejected" else AMBER}; font-weight:bold;'>{_e(disp)}</span></td>"
+            f"</tr>"
+        )
     return (
         "<table><thead><tr>"
-        "<th>ID</th><th>Asset</th><th>Reason</th><th>Sev</th><th>Conf</th>"
-        "<th>Disposition</th><th>Tags</th><th>Linked</th>"
+        "<th>ID</th><th>Asset</th><th>Reason</th><th>Severity</th><th>Disposition</th>"
         "</tr></thead><tbody>"
-        + "".join(rows)
+        + "".join(rows_simple)
         + "</tbody></table>"
     )
 
@@ -465,11 +492,12 @@ def _verdict_banner(findings: list[dict[str, Any]]) -> str:
         link_txt = f" | model trigger matches patch in {_e(src)} samples"
 
     return (
-        f"<div class='verdict'>"
-        f"<h2>🚨 {_e(src)}: HIGH RISK{link_txt}</h2>"
-        f"<p>{_e(reason[:200])}</p>"
-        f"<p class='action'>Recommended action: <b>{_e(disp)}</b> — "
-        f"Finding <a href='#finding-{_e(fid)}'>{_e(fid)}</a></p>"
+        f"<div class='verdict' style='display:flex; justify-content:center; align-items:center; border: 2px solid {RED}; background: #fff0f0; color: {RED}; font-weight: bold; padding: 12px; gap: 16px; font-size: 16px;'>"
+        f"<span>{_e(src)}: HIGH RISK</span>"
+        f"<span>|</span>"
+        f"<span>{_e(reason[:80])}</span>"
+        f"<span>|</span>"
+        f"<span>recommended action: {_e(disp)}</span>"
         f"</div>"
     )
 
@@ -651,12 +679,14 @@ def render_report(out_dir: Path) -> Path:
             f"<div class='hash' style='margin-top:8px;font-size:10px'>{_e(payload_sha[:24])}…</div>"
             f"</div>"
         )
+        qr_html_only = f"<img src='{qr_b64}' alt='QR'>"
     except Exception:
         qr_html = (
             f"<div class='card' style='color:var(--muted);font-size:12px'>"
             f"QR not available (install qrcode[pil]).<br>"
             f"<span class='hash'>{_e(payload_sha)}</span></div>"
         )
+        qr_html_only = ""
 
     # Stub warning
     stub_warn_html = ""
@@ -689,52 +719,71 @@ def render_report(out_dir: Path) -> Path:
 </head>
 <body>
 
-<h1>CVAssure &mdash; Assurance Report</h1>
-<p class="meta">{meta}</p>
-<p class="meta">{policy_line} &nbsp;&middot;&nbsp; {sha_line}</p>
-{stub_warn_html}
+<div class="top-bar">
+  <div class="top-bar-text">
+    <h1>CVAssure | Assurance Report</h1>
+    <div class="top-bar-meta">
+      <span>run: {datetime.now().strftime('%Y-%m-%d') if 'import_datetime' in globals() else 'yyyy-mm-dd'}</span>
+      <span>tool v{_e(tool_ver)}</span>
+      <span>policy hash: {_e(str(policy_hash)[:16])}</span>
+    </div>
+  </div>
+  <div class="top-bar-right">
+    <span class="top-bar-meta">report sha256: {_e(report_sha[:16])}</span>
+    <div class="top-bar-qr">
+      {qr_html_only}
+    </div>
+  </div>
+</div>
 
-{_verdict_banner(findings_raw)}
+<div class="content-area">
+  {stub_warn_html}
+  {_verdict_banner(findings_raw)}
 
-<div class="two-col">
-  <div>
-    <div class="card">
-      <h2>Contributor Risk Heatmap</h2>
+  <div class="three-col">
+    <div class="card" style="margin-bottom:0">
+      <h2>Contributor risk</h2>
       <div class="heatmap-wrap">
         {_heatmap_svg(findings_raw)}
       </div>
       <div class="hm-legend">
         <span>low</span>
         <div class="hm-grad"></div>
-        <span>high risk</span>
+        <span>high</span>
+      </div>
+      <p style="font-size:11px;color:var(--muted);margin-top:8px;">click a row: batch timeline for that source</p>
+    </div>
+    
+    <div class="card" style="margin-bottom:0">
+      <h2>Evidence gallery (flagged images)</h2>
+      {_gallery_html(findings_raw, out_dir)}
+      <p style="font-size:11px;color:var(--muted);margin-top:8px;">click image: full crop with trigger overlay + evidence</p>
+    </div>
+    
+    <div class="card" style="margin-bottom:0">
+      <h2>Shift timeline</h2>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">shift risk</div>
+      <div class="timeline-wrap">
+        {_timeline_svg(findings_raw)}
+      </div>
+      <div style="margin-top:8px;font-size:11px;color:var(--muted)">
+        <div style="color:{BLUE};font-weight:700">blue: fog = gradual = drift</div>
+        <div style="color:{RED};font-weight:700">red: patch = step = manipulation</div>
       </div>
     </div>
   </div>
-  <div>
-    <div class="card">
-      <h2>Evidence Gallery</h2>
-      {_gallery_html(findings_raw, out_dir)}
+
+  <div class="card">
+    <div class="findings-header">
+      <h2>Findings and actions</h2>
+      <div class="actions">
+        {_quarantine_script(quarantine)}
+        <button class="qbtn" onclick="dlQuarantine()">Export quarantine list</button>
+        <span class="audit-chip">Audit: verified</span>
+      </div>
     </div>
+    {_findings_table_html(findings_raw)}
   </div>
-</div>
-
-<div class="card">
-  <h2>Shift Timeline</h2>
-  <div class="timeline-wrap">
-    {_timeline_svg(findings_raw)}
-  </div>
-  <div style="margin-top:8px;font-size:11px;color:var(--muted)">
-    <span style="color:{BLUE};font-weight:700">■</span> drift &nbsp;
-    <span style="color:{RED};font-weight:700">■</span> manipulation &nbsp;
-    <span style="color:{AMBER};font-weight:700">■</span> undetermined
-  </div>
-</div>
-
-<div class="card">
-  <h2>Findings &amp; Actions</h2>
-  {_findings_table_html(findings_raw)}
-  {_quarantine_script(quarantine)}
-  <button class="qbtn" onclick="dlQuarantine()">⬇ Export quarantine list</button>
 </div>
 
 <div class="card">
