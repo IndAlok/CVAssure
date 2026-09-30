@@ -1,0 +1,66 @@
+{
+  "batches": [
+    {
+      "batch_id": "B-2",
+      "finding_ids": [
+        "F-005"
+      ],
+      "reason": "[STUB] fixture manipulation on batch B-2, localised rather than global shift"
+    }
+  ],
+  "records": [
+    {
+      "finding_ids": [
+        "F-003"
+      ],
+      "record_id": "rec-0007"
+    },
+    {
+      "finding_ids": [
+        "F-004"
+      ],
+      "record_id": "rec-0012"
+    }
+  ],
+  "samples": [
+    {
+      "finding_ids": [
+        "F-001"
+      ],
+      "sample_id": "1"
+    },
+    {
+      "finding_ids": [
+        "F-001"
+      ],
+      "sample_id": "2"
+    },
+    {
+      "finding_ids": [
+        "F-001"
+      ],
+      "sample_id": "3"
+    },
+    {
+      "finding_ids": [
+        "F-003"
+      ],
+      "sample_id": "rec-0007"
+    },
+    {
+      "finding_ids": [
+        "F-004"
+      ],
+      "sample_id": "rec-0012"
+    }
+  ],
+  "sources": [
+    {
+      "finding_ids": [
+        "F-001"
+      ],
+      "reason": "[STUB] fixture patch trigger, source C-07, 1 of 8 samples carries patch P-03",
+      "source_id": "C-07"
+    }
+  ]
+}

@@ -25,7 +25,7 @@ After install, the audit command does not need a network.
 ## Audit
 
 ```bash
-cvassure audit --data ./data --model ./model.onnx --records ./records.jsonl
+cvassure audit --data ./data --model ./model.onnx --records ./records.jsonl --privkey ./cvassure.key --pubkey ./cvassure.pub
 ```
 
 Inputs are a COCO JSON or YOLO txt dataset, an ONNX or TorchScript model, and JSON Lines inference records. The tool is not tied to one architecture or one dataset.
@@ -34,9 +34,11 @@ Inputs are a COCO JSON or YOLO txt dataset, an ONNX or TorchScript model, and JS
 
 `--strict` exits 5 when a stub ran. `--fail-on review`, `--fail-on quarantine`, or `--fail-on rejected` exits 10 when a finding has that disposition. `--reproducible` freezes timestamps so `findings.json` and `payload_sha256` match across runs. The CLI still prints the wall-clock time.
 
+`--privkey` and `--pubkey` supply Ed25519 keys to sign the audit log hash chain and build the provenance Merkle tree. If `cvassure.provenance.chain.SignedChain` is installed, this ensures a tamper-proof chain.
+
 Other commands:
 
-- `verify-log` checks the audit log hash chain.
+- `verify-log` checks the audit log hash chain. Pass `--pubkey` to verify Ed25519 signatures.
 - `verify-report` checks the two report hashes.
 - `list-detectors` prints the loaded detectors.
 - `schema` prints the Finding JSON Schema.
@@ -70,7 +72,9 @@ A run writes these files under `--out`, which defaults to `out/`:
 
 `payload_sha256` is the SHA-256 of the canonical findings, coverage, and manifest. The HTML header embeds that digest. `file_sha256` is the SHA-256 of the HTML bytes. The CLI prints it, and the audit log stores it. The HTML file does not contain its own digest.
 
-The audit log is JSON Lines. Each entry has `prev_hash` and `entry_hash`. The first `prev_hash` is 64 zeros. The writer fsyncs each append. `verify-log` detects an edit, a deletion, a reorder, and a truncation when the expected head from `run_manifest.json` is supplied. `LocalSha256Chain` does not sign entries. An entry that already carries a signature is refused by that verifier. If `cvassure.provenance.chain.SignedChain` imports, the pipeline uses it instead.
+The audit log is JSON Lines. Each entry has `prev_hash` and `entry_hash`. The first `prev_hash` is 64 zeros. The writer fsyncs each append. `verify-log` detects an edit, a deletion, a reorder, and a truncation when the expected head from `run_manifest.json` is supplied. 
+
+When the `cvassure.provenance` module is present and keys are supplied, the log uses `SignedChain` which adds an Ed25519 `sig` and `pubkey_fp` to every entry, as well as computing a `merkle_root` stored in the manifest. The `LocalSha256Chain` fallback does not sign entries and refuses entries that carry signatures.
 
 ## Findings
 
@@ -158,6 +162,7 @@ List the module in the run config so load order is explicit. A real module with 
 - `scripts/make_offline_bundle.py` builds a wheelhouse.
 - `scripts/nightly_demo.py` regenerates seed 42 and audits it.
 - `scripts/smoke_demo.py` runs the same path and prints the CLI output.
+- `scripts/record_demo.py` runs the full end-to-end 4th-role demonstration with Ed25519 signing, tampering tests, and dashboard generation.
 - `tests/` holds unit and integration tests. `tests/fixtures/synthetic_scenario.py` builds a small synthetic dataset, unsigned JSONL records, and a tiny ONNX graph. That graph is not a trained or backdoored model. Contributor ids in that fixture are fixture values. Policy, the linker, and core logic do not hard-code them.
 
 ## Offline install
@@ -176,6 +181,20 @@ pip install --no-index --find-links wheelhouse cvassure
 
 `wheelhouse/` is gitignored.
 
+## Demo
+
+To run the full end-to-end demonstration (Role 4: Provenance, crypto and dashboard):
+
+```bash
+python scripts/record_demo.py
+```
+
+To extract the mock-up images and architecture diagrams for the presentation storyboard:
+
+```bash
+python scripts/render_storyboard.py
+```
+
 ## Development
 
 ```bash
@@ -188,10 +207,6 @@ pytest --disable-socket
 CI runs Ubuntu and Windows on Python 3.11. The nightly workflow runs `scripts/nightly_demo.py`. It does not pass `--strict` while stubs are still registered.
 
 Core dependencies are pydantic, PyYAML, jsonschema, typer, rich, and numpy. Matplotlib and Pillow are not core imports. IoU and normalised cross-correlation use NumPy.
-
-## What is not in this tree
-
-Signed audit-log entries, a Merkle tree, and a replacement HTML dashboard. Provide `cvassure.provenance.chain.SignedChain` and `cvassure.provenance.render_report` to take those over. Until then the local SHA-256 chain and the built-in HTML report are what a run writes.
 
 Red-team mode and signed dataset or model cards are not implemented.
 

@@ -1,0 +1,29 @@
+{
+  "calibration": "UNCALIBRATED",
+  "links": [
+    {
+      "components": {
+        "identity": 1.0,
+        "overlap": 0.9022222222222223,
+        "pattern": 1.0
+      },
+      "data_finding": "F-001",
+      "evidence": "evidence/LINK_F-002_F-001.png",
+      "model_finding": "F-002",
+      "score": 0.9804,
+      "weights_used": {
+        "identity": 0.5,
+        "overlap": 0.2,
+        "pattern": 0.3
+      }
+    }
+  ],
+  "pairs_considered": 1,
+  "pairs_linked": 1,
+  "tau_link": 0.5,
+  "weights": {
+    "identity": 0.5,
+    "overlap": 0.2,
+    "pattern": 0.3
+  }
+}

@@ -16,6 +16,8 @@ dependencies = [
     "typer>=0.12,<1",
     "rich>=13,<15",
     "numpy>=1.26,<3",
+    "PyNaCl>=1.5,<2",
+    "qrcode[pil]>=7,<9",
 ]
 
 [project.optional-dependencies]
@@ -23,6 +25,7 @@ dev = [
     "pytest>=8,<9",
     "ruff>=0.6",
     "pytest-socket>=0.7",
+    "pytest-cov>=5,<7",
 ]
 
 [project.scripts]
@@ -47,6 +50,7 @@ select = ["E", "F", "I", "UP", "B", "C4", "SIM"]
 # B008: `typer.Option(...)` in an argument default is typer's required idiom, not
 # a mutable-default bug. Rewriting it to satisfy the rule would break the CLI.
 "src/cvassure/core/cli.py" = ["B008"]
+"src/cvassure/provenance/report.py" = ["E501"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
