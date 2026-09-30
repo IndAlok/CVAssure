@@ -50,6 +50,7 @@ select = ["E", "F", "I", "UP", "B", "C4", "SIM"]
 # B008: `typer.Option(...)` in an argument default is typer's required idiom, not
 # a mutable-default bug. Rewriting it to satisfy the rule would break the CLI.
 "src/cvassure/core/cli.py" = ["B008"]
+"src/cvassure/provenance/report.py" = ["E501"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
