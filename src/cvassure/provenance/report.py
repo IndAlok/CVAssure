@@ -28,9 +28,9 @@ from __future__ import annotations
 import base64
 import html
 import json
+from datetime import datetime
 from pathlib import Path
 from typing import Any
-from datetime import datetime
 
 # ── Palette ──────────────────────────────────────────────────────────────────
 BLUE = "#0070C0"
@@ -545,11 +545,11 @@ def _provenance_panel(manifest: dict[str, Any], chain_ok: bool) -> str:
     merkle = manifest.get("merkle_root", "")
 
     if chain_ok and signed:
-        chip = f"<span class='chip-signed'>🔐 Signed & Verified</span>"
+        chip = "<span class='chip-signed'>🔐 Signed & Verified</span>"
     elif chain_ok:
         chip = f"<span class='chip-signed' style='background:{BLUE}'>✓ Chain Verified</span>"
     else:
-        chip = f"<span class='chip-broken'>✗ CHAIN BROKEN</span>"
+        chip = "<span class='chip-broken'>✗ CHAIN BROKEN</span>"
 
     items = [
         ("Status", chip),

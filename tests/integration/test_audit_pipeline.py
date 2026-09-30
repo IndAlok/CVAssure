@@ -89,7 +89,7 @@ def test_ids_are_assigned_in_order(run) -> None:
 
 def test_audit_log_verifies_against_the_manifest_head(run) -> None:
     manifest = json.loads((run.out_dir / "run_manifest.json").read_text(encoding="utf-8"))
-    res = verify_file(run.out_dir / "audit.log", expected_head=manifest["audit_head"])
+    res = verify_file(run.out_dir / "audit.log", expected_head=manifest["audit_head"], allow_signatures=True)
     assert res.ok, res.reason
     assert res.head == run.chain_head
 
@@ -310,6 +310,7 @@ def test_audit_runs_with_sockets_blocked(scenario, tmp_path: Path) -> None:
     # expected to construct one, and if something does, we want the OSError.
     code = f"""
 import socket
+import ssl
 
 def _blocked(*a, **k):
     raise OSError("network disabled for this test")

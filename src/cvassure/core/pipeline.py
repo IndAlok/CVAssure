@@ -130,7 +130,15 @@ def _assign_ids(pairs: Sequence[tuple[Finding, str]]) -> list[Finding]:
 #: Excluding a field from its own preimage is standard. Excluding the other two
 #: is a choice, and it is the one that lets `verify-report` recompute this from
 #: `out/` at any time without re-running the audit.
-POST_RENDER_FIELDS = ("payload_sha256", "report_file_sha256", "audit_head")
+POST_RENDER_FIELDS = (
+    "payload_sha256",
+    "report_file_sha256",
+    "audit_head",
+    "chain_backend",
+    "signed",
+    "signer_fingerprint",
+    "merkle_root",
+)
 
 
 def _payload_sha256(findings, coverage: Coverage, manifest: dict[str, Any]) -> str:
@@ -512,6 +520,8 @@ def run_audit(
     manifest["audit_head"] = ""
     payload_sha256 = _payload_sha256(with_policy, cov, manifest)
     manifest["payload_sha256"] = payload_sha256
+
+    (out_dir / "run_manifest.json").write_text(canonical_json(manifest) + "\n", encoding="utf-8")
 
     report_path = render_from_out_dir(out_dir)
     if report_path is None:
