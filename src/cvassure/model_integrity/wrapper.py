@@ -215,11 +215,9 @@ class CvModelWrapper:
             else:
                 outputs = self._session.run(None, {input_name: np.asarray(batch)})
             # Return all outputs (including intermediates if the graph has them)
-            return (
-                np.concatenate([np.asarray(o).flatten() for o in outputs])
-                if outputs
-                else Unavailable("ONNX session returned no outputs")
-            )
+            if outputs:
+                return np.concatenate([np.asarray(o).flatten() for o in outputs])
+            return Unavailable("ONNX session returned no outputs")
         except Exception as exc:
             return Unavailable(f"ONNX feature extraction failed: {type(exc).__name__}: {exc}")
 
