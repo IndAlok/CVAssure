@@ -219,7 +219,7 @@ def verify_log(
         raise typer.Exit(ExitCode.VERIFY)
 
     # No pubkey: hash-chain only
-    res_core = verify_file(log, expected_head=expected)
+    res_core = verify_file(log, expected_head=expected, allow_signatures=True)
     if res_core.ok:
         console.print(f"[{GREEN}]chain verified[/]  {res_core.entries} entries, head {res_core.head[:12]}")
         raise typer.Exit(ExitCode.OK)
