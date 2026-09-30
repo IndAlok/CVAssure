@@ -26,6 +26,7 @@ Design constraints:
 from __future__ import annotations
 
 import base64
+import contextlib
 import html
 import json
 from datetime import datetime
@@ -43,6 +44,7 @@ DARK_BG = "#0f1117"
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
+
 
 def _e(v: Any) -> str:
     return html.escape(str(v), quote=True)
@@ -73,7 +75,9 @@ def _img_b64(path: Path) -> str | None:
         return None
     data = base64.b64encode(path.read_bytes()).decode("ascii")
     suffix = path.suffix.lower().lstrip(".")
-    mime = {"png": "image/png", "jpg": "image/jpeg", "jpeg": "image/jpeg", "gif": "image/gif"}.get(suffix, "image/png")
+    mime = {"png": "image/png", "jpg": "image/jpeg", "jpeg": "image/jpeg", "gif": "image/gif"}.get(
+        suffix, "image/png"
+    )
     return f"data:{mime};base64,{data}"
 
 
@@ -236,6 +240,7 @@ details[open] summary{{margin-bottom:8px}}
 
 # ── Heatmap (inline SVG) ─────────────────────────────────────────────────────
 
+
 def _heatmap_svg(findings: list[dict[str, Any]]) -> str:
     """Build an SVG contributor-risk heatmap from findings."""
     # Collect source_id × batch_id risk scores
@@ -295,7 +300,7 @@ def _heatmap_svg(findings: list[dict[str, Any]]) -> str:
             fill = _heat_colour(v) if v > 0 else "#eef2f7"
             stroke = RED if is_top and v >= 0.7 else "#ccd4e0"
             stroke_w = "2" if is_top and v >= 0.7 else "1"
-            tip = f"title='{_e(src)} × {_e(bat)}: {v:.2f}'"
+            f"title='{_e(src)} × {_e(bat)}: {v:.2f}'"
             cells.append(
                 f"<rect x='{x}' y='{y}' width='{cell_w - 3}' height='{cell_h - 3}' "
                 f"rx='4' fill='{fill}' stroke='{stroke}' stroke-width='{stroke_w}'>"
@@ -315,12 +320,11 @@ def _heatmap_svg(findings: list[dict[str, Any]]) -> str:
         )
 
     inner = "\n  ".join(cells)
-    return (
-        f"<svg viewBox='0 0 {W} {H}' width='{min(W, 800)}' style='max-width:100%'>\n  {inner}\n</svg>"
-    )
+    return f"<svg viewBox='0 0 {W} {H}' width='{min(W, 800)}' style='max-width:100%'>\n  {inner}\n</svg>"
 
 
 # ── Shift Timeline (inline SVG) ───────────────────────────────────────────────
+
 
 def _timeline_svg(findings: list[dict[str, Any]]) -> str:
     shift_findings = [f for f in findings if f.get("asset") == "shift"]
@@ -332,7 +336,11 @@ def _timeline_svg(findings: list[dict[str, Any]]) -> str:
         bid = f.get("batch_id", "?")
         tags = f.get("tags", [])
         sev = f.get("severity", 0.0)
-        verdict = "manipulation" if "manipulation" in tags else ("drift" if "drift" in tags else "undetermined")
+        verdict = (
+            "manipulation"
+            if "manipulation" in tags
+            else ("drift" if "drift" in tags else "undetermined")
+        )
         batches[bid] = (verdict, sev)
 
     bids = sorted(batches.keys())
@@ -341,44 +349,44 @@ def _timeline_svg(findings: list[dict[str, Any]]) -> str:
     W = pad_left + len(bids) * (bar_w + gap) + gap
     H = pad_top + bar_max_h + pad_bottom
 
-    
     # Fake two lines for visual matching with mock-up if we lack actual two-series data
     W, H = 250, 150
     pad_left, pad_bottom = 20, 20
-    
+
     # Generate points
     points_drift = []
     points_manip = []
-    for i, bid in enumerate(bids):
+    for i, _bid in enumerate(bids):
         x = pad_left + i * ((W - pad_left) / max(1, len(bids) - 1))
         # drift goes up steadily
         yd = H - pad_bottom - (i / max(1, len(bids) - 1)) * (H - pad_bottom - 20)
         # manip stays low then spikes
-        ym = H - pad_bottom - 5 if i < len(bids)*0.7 else H - pad_bottom - 100
+        ym = H - pad_bottom - 5 if i < len(bids) * 0.7 else H - pad_bottom - 100
         points_drift.append(f"{x},{yd}")
         points_manip.append(f"{x},{ym}")
-        
+
     pts_d = " ".join(points_drift)
     pts_m = " ".join(points_manip)
-    
+
     inner = (
         f"<polyline points='{pts_d}' fill='none' stroke='{BLUE}' stroke-width='3'/>\n"
         f"<polyline points='{pts_m}' fill='none' stroke='{RED}' stroke-width='3'/>\n"
     )
-    
+
     # axes
-    inner += f"<line x1='{pad_left}' y1='{H-pad_bottom}' x2='{W}' y2='{H-pad_bottom}' stroke='#ccc' stroke-width='1'/>\n"
-    inner += f"<line x1='{pad_left}' y1='0' x2='{pad_left}' y2='{H-pad_bottom}' stroke='#ccc' stroke-width='1'/>\n"
-    
+    inner += f"<line x1='{pad_left}' y1='{H - pad_bottom}' x2='{W}' y2='{H - pad_bottom}' stroke='#ccc' stroke-width='1'/>\n"
+    inner += f"<line x1='{pad_left}' y1='0' x2='{pad_left}' y2='{H - pad_bottom}' stroke='#ccc' stroke-width='1'/>\n"
+
     # labels
-    inner += f"<text x='{pad_left}' y='{H}' font-size='10' fill='var(--muted)'>batch B1 ... B8</text>\n"
-    
-    return (
-        f"<svg viewBox='0 0 {W} {H}' width='100%' height='220' preserveAspectRatio='xMidYMid meet' style='max-width:100%; display:block'>\n  {inner}\n</svg>"
+    inner += (
+        f"<text x='{pad_left}' y='{H}' font-size='10' fill='var(--muted)'>batch B1 ... B8</text>\n"
     )
+
+    return f"<svg viewBox='0 0 {W} {H}' width='100%' height='220' preserveAspectRatio='xMidYMid meet' style='max-width:100%; display:block'>\n  {inner}\n</svg>"
 
 
 # ── Evidence Gallery ──────────────────────────────────────────────────────────
+
 
 def _gallery_html(findings: list[dict[str, Any]], out_dir: Path) -> str:
     flagged = [f for f in findings if f.get("disposition") in ("quarantine", "rejected", "review")]
@@ -403,9 +411,8 @@ def _gallery_html(findings: list[dict[str, Any]], out_dir: Path) -> str:
             )
         sev = f.get("severity", 0.0)
         fid = f.get("id", "?")
-        disp = f.get("disposition", "review")
+        f.get("disposition", "review")
         asset = f.get("asset", "?")
-        chip_bg = RED if disp == "quarantine" else (NAVY if disp == "rejected" else BLUE)
         reason_txt = f.get("reason", "")[:80]
         items.append(
             f"<div class='gallery-item' title='{_e(fid)}: {_e(reason_txt)}'>"
@@ -420,6 +427,7 @@ def _gallery_html(findings: list[dict[str, Any]], out_dir: Path) -> str:
 
 
 # ── Findings Table ────────────────────────────────────────────────────────────
+
 
 def _findings_table_html(findings: list[dict[str, Any]]) -> str:
     if not findings:
@@ -438,18 +446,23 @@ def _findings_table_html(findings: list[dict[str, Any]]) -> str:
         stub = f.get("stub", False)
         esc = f.get("escalation")
 
-        stub_badge = " <span style='background:#ffe9c7;color:#8a5a00;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:700'>STUB</span>" if stub else ""
+        stub_badge = (
+            " <span style='background:#ffe9c7;color:#8a5a00;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:700'>STUB</span>"
+            if stub
+            else ""
+        )
         esc_badge = ""
         if esc and esc.get("escalated"):
             esc_badge = (
                 f" <span style='background:{BLUE};color:#fff;padding:1px 6px;"
-                f"border-radius:8px;font-size:10px'>ESCALATED ↑{esc.get('severity_before',0):.2f}→{sev:.2f}</span>"
+                f"border-radius:8px;font-size:10px'>ESCALATED ↑{esc.get('severity_before', 0):.2f}→{sev:.2f}</span>"
             )
 
         tag_html = " ".join(f"<code>{_e(t)}</code>" for t in tags) or "—"
-        link_html = " ".join(
-            f"<a href='#finding-{_e(l)}'>{_e(l)}</a>" for l in links
-        ) or "—"
+        link_html = (
+            " ".join(f"<a href='#finding-{_e(link_id)}'>{_e(link_id)}</a>" for link_id in links)
+            or "—"
+        )
 
         row_style = ""
         if disp == "quarantine":
@@ -482,19 +495,18 @@ def _findings_table_html(findings: list[dict[str, Any]]) -> str:
             f"<td>{_e(asset)}</td>"
             f"<td>{_e(reason)}</td>"
             f"<td>{sev:.2f}</td>"
-            f"<td><span style='color:{RED if disp=="quarantine" or disp=="rejected" else AMBER}; font-weight:bold;'>{_e(disp)}</span></td>"
+            f"<td><span style='color:{RED if disp == 'quarantine' or disp == 'rejected' else AMBER}; font-weight:bold;'>{_e(disp)}</span></td>"
             f"</tr>"
         )
     return (
         "<table><thead><tr>"
         "<th>ID</th><th>Asset</th><th>Reason</th><th>Severity</th><th>Disposition</th>"
-        "</tr></thead><tbody>"
-        + "".join(rows_simple)
-        + "</tbody></table>"
+        "</tr></thead><tbody>" + "".join(rows_simple) + "</tbody></table>"
     )
 
 
 # ── Verdict Banner ────────────────────────────────────────────────────────────
+
 
 def _verdict_banner(findings: list[dict[str, Any]]) -> str:
     quarantined = [f for f in findings if f.get("disposition") == "quarantine"]
@@ -504,7 +516,9 @@ def _verdict_banner(findings: list[dict[str, Any]]) -> str:
     if not quarantined and not rejected:
         if not reviewed:
             msg = "No findings. This is not a clean bill of health."
-            return f"<div class='verdict clean'><h2>✓ No flagged findings</h2><p>{_e(msg)}</p></div>"
+            return (
+                f"<div class='verdict clean'><h2>✓ No flagged findings</h2><p>{_e(msg)}</p></div>"
+            )
         return (
             f"<div class='verdict' style='border-color:{AMBER};background:#fffbe6'>"
             f"<h2 style='color:{AMBER}'>⚠ Review Required</h2>"
@@ -517,12 +531,11 @@ def _verdict_banner(findings: list[dict[str, Any]]) -> str:
     src = top.get("source_id") or top.get("batch_id") or "unknown"
     reason = top.get("reason", "")
     disp = top.get("disposition", "quarantine").upper()
-    fid = top.get("id", "")
+    top.get("id", "")
 
     link_ids = top.get("linked_findings", [])
-    link_txt = ""
     if link_ids:
-        link_txt = f" | model trigger matches patch in {_e(src)} samples"
+        f" | model trigger matches patch in {_e(src)} samples"
 
     return (
         f"<div class='verdict' style='display:flex; justify-content:center; align-items:center; border: 2px solid {RED}; background: #fff0f0; color: {RED}; font-weight: bold; padding: 12px; gap: 16px; font-size: 16px;'>"
@@ -536,6 +549,7 @@ def _verdict_banner(findings: list[dict[str, Any]]) -> str:
 
 
 # ── Provenance Panel ──────────────────────────────────────────────────────────
+
 
 def _provenance_panel(manifest: dict[str, Any], chain_ok: bool) -> str:
     backend = manifest.get("chain_backend", "unknown")
@@ -571,6 +585,7 @@ def _provenance_panel(manifest: dict[str, Any], chain_ok: bool) -> str:
 
 # ── Audit Log Collapsible ─────────────────────────────────────────────────────
 
+
 def _audit_log_section(out_dir: Path) -> str:
     log_path = out_dir / "audit.log"
     if not log_path.is_file():
@@ -579,10 +594,8 @@ def _audit_log_section(out_dir: Path) -> str:
     entries = []
     for line in log_path.read_text(encoding="utf-8").splitlines():
         if line.strip():
-            try:
+            with contextlib.suppress(json.JSONDecodeError):
                 entries.append(json.loads(line))
-            except json.JSONDecodeError:
-                pass
 
     if not entries:
         return "<p style='color:var(--muted);font-size:13px'>Empty audit log.</p>"
@@ -591,15 +604,16 @@ def _audit_log_section(out_dir: Path) -> str:
     for e in entries:
         sig = e.get("sig", "")
         signed_cell = (
-            f"<span style='color:{GREEN};font-weight:700'>✓</span>" if sig
+            f"<span style='color:{GREEN};font-weight:700'>✓</span>"
+            if sig
             else f"<span style='color:{AMBER}'>—</span>"
         )
         rows.append(
             f"<tr>"
-            f"<td>{_e(e.get('seq',''))}</td>"
-            f"<td>{_e(e.get('ts',''))}</td>"
-            f"<td><code>{_e(e.get('event',''))}</code></td>"
-            f"<td class='hash'>{_e(str(e.get('entry_hash',''))[:16])}…</td>"
+            f"<td>{_e(e.get('seq', ''))}</td>"
+            f"<td>{_e(e.get('ts', ''))}</td>"
+            f"<td><code>{_e(e.get('event', ''))}</code></td>"
+            f"<td class='hash'>{_e(str(e.get('entry_hash', ''))[:16])}…</td>"
             f"<td>{signed_cell}</td>"
             f"</tr>"
         )
@@ -612,6 +626,7 @@ def _audit_log_section(out_dir: Path) -> str:
 
 
 # ── Coverage Section ──────────────────────────────────────────────────────────
+
 
 def _coverage_section_html(coverage: dict[str, Any]) -> str:
     rows_data = coverage.get("rows", [])
@@ -631,17 +646,15 @@ def _coverage_section_html(coverage: dict[str, Any]) -> str:
         colour = status_colour.get(sc, "#999")
         rows.append(
             f"<tr>"
-            f"<td>{_e(r.get('attack_class',''))}</td>"
+            f"<td>{_e(r.get('attack_class', ''))}</td>"
             f"<td><span style='color:{colour};font-weight:700'>{_e(sc)}</span></td>"
             f"<td>{_e(r.get('measured') or '—')}</td>"
-            f"<td style='color:var(--muted);font-size:12px'>{_e(r.get('reason',''))}</td>"
+            f"<td style='color:var(--muted);font-size:12px'>{_e(r.get('reason', ''))}</td>"
             f"</tr>"
         )
 
     warn = coverage.get("warning", "")
-    warn_html = (
-        f"<div class='stub-warn'>{_e(warn)}</div>" if warn else ""
-    )
+    warn_html = f"<div class='stub-warn'>{_e(warn)}</div>" if warn else ""
     return (
         warn_html
         + "<table><thead><tr><th>Attack class</th><th>Status</th><th>Measured</th><th>Limitation</th></tr></thead>"
@@ -650,6 +663,7 @@ def _coverage_section_html(coverage: dict[str, Any]) -> str:
 
 
 # ── Quarantine Export Script ──────────────────────────────────────────────────
+
 
 def _quarantine_script(quarantine: dict[str, Any]) -> str:
     """Inline JS to download quarantine.json — no fetch, no CDN."""
@@ -666,6 +680,7 @@ def _quarantine_script(quarantine: dict[str, Any]) -> str:
 
 
 # ── Main Render ───────────────────────────────────────────────────────────────
+
 
 def render_report(out_dir: Path) -> Path:
     """Build the offline HTML dashboard from ``out_dir``.
@@ -700,12 +715,12 @@ def render_report(out_dir: Path) -> Path:
     stub_ran = manifest.get("stub_flags", {}).get("stub_ran", False)
 
     # QR code
-    qr_html = ""
     try:
         from cvassure.provenance.qr import payload_qr_content, render_qr_base64
+
         qr_data = payload_qr_content(payload_sha) if payload_sha else "cvassure:no-payload"
         qr_b64 = render_qr_base64(qr_data, size=200)
-        qr_html = (
+        (
             f"<div class='qr-box card'>"
             f"<div style='font-size:11px;color:var(--muted);margin-bottom:8px;font-weight:700'>PAYLOAD QR</div>"
             f"<img src='{qr_b64}' width='160' height='160' alt='QR code for payload_sha256'>"
@@ -714,7 +729,7 @@ def render_report(out_dir: Path) -> Path:
         )
         qr_html_only = f"<img src='{qr_b64}' alt='QR'>"
     except Exception:
-        qr_html = (
+        (
             f"<div class='card' style='color:var(--muted);font-size:12px'>"
             f"QR not available (install qrcode[pil]).<br>"
             f"<span class='hash'>{_e(payload_sha)}</span></div>"
@@ -731,13 +746,14 @@ def render_report(out_dir: Path) -> Path:
         )
 
     # Meta line
-    meta = (
+    (
         f"seed {_e(seed)} &middot; tool v{_e(tool_ver)} &middot; "
         f"commit {_e(git)} &middot; CPU-only, offline, air-gapped"
     )
-    policy_line = f"policy hash: <span class='hash'>{_e(str(policy_hash)[:16])}…</span>"
-    sha_line = (
-        f"report sha256: <span class='hash'>{_e(report_sha[:24])}…</span>" if report_sha
+    f"policy hash: <span class='hash'>{_e(str(policy_hash)[:16])}…</span>"
+    (
+        f"report sha256: <span class='hash'>{_e(report_sha[:24])}…</span>"
+        if report_sha
         else f"payload sha256: <span class='hash'>{_e(payload_sha[:24])}…</span>"
     )
 
@@ -756,7 +772,7 @@ def render_report(out_dir: Path) -> Path:
   <div class="top-bar-text">
     <h1>CVAssure | Assurance Report</h1>
     <div class="top-bar-meta">
-      <span>run: {datetime.now().strftime('%Y-%m-%d') if 'import_datetime' in globals() else 'yyyy-mm-dd'}</span>
+      <span>run: {datetime.now().strftime("%Y-%m-%d") if "import_datetime" in globals() else "yyyy-mm-dd"}</span>
       <span>tool v{_e(tool_ver)}</span>
       <span>policy hash: {_e(str(policy_hash)[:16])}</span>
     </div>
