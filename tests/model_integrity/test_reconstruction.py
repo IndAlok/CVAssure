@@ -83,7 +83,9 @@ def test_reconstruction_finding_has_link_hints() -> None:
         ),
         metadata={"flagged_classes": [0], "median": 2.0, "mad": 0.5},
     )
-    validated = validate_finding(f.to_final("F-001").model_dump(), detector_id="model.reconstruction")
+    validated = validate_finding(
+        f.to_final("F-001").model_dump(), detector_id="model.reconstruction"
+    )
     assert validated.link_hints is not None
     assert validated.link_hints.trigger.kind == "reconstructed"
     assert validated.link_hints.trigger.mask_path == "evidence/recon_mask_class_0.png"

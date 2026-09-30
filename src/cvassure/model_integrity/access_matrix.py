@@ -77,9 +77,7 @@ def generate_matrix(
 
     # Build pixel grid
     background = (255, 255, 255)
-    pixels: list[list[tuple[int, int, int]]] = [
-        [background] * width for _ in range(height)
-    ]
+    pixels: list[list[tuple[int, int, int]]] = [[background] * width for _ in range(height)]
 
     # Draw header row
     for ti, tier_name in enumerate(tiers):
@@ -156,7 +154,6 @@ def _draw_left_text(
     color: tuple[int, int, int],
 ) -> None:
     """Draw text left-aligned in a cell."""
-    char_w = 6
     char_h = 8
     start_y = y + max(0, (h - char_h) // 2)
     _draw_text(pixels, text, x + 4, start_y, color)

@@ -15,7 +15,6 @@ import numpy as np
 
 from cvassure.core.detector import AuditContext, Detector, DetectorResult
 from cvassure.core.finding import Finding, LinkHints, TriggerHint
-from cvassure.core.imaging import NAVY, checkerboard
 
 
 class TriggerSweepDetector(Detector):
@@ -172,9 +171,7 @@ class TriggerSweepDetector(Detector):
                 continue
         return patches
 
-    def _apply_patch(
-        self, images: np.ndarray, patch: np.ndarray
-    ) -> np.ndarray:
+    def _apply_patch(self, images: np.ndarray, patch: np.ndarray) -> np.ndarray:
         """Apply a patch to a batch of images at a fixed location."""
         patched = images.copy()
         ph, pw = patch.shape[:2]
@@ -184,9 +181,7 @@ class TriggerSweepDetector(Detector):
         x = max(0, w - pw)
         # Normalize patch to image range
         patch_resized = self._resize_patch(patch, min(ph, h), min(pw, w))
-        patched[..., y : y + patch_resized.shape[0], x : x + patch_resized.shape[1]] = (
-            patch_resized
-        )
+        patched[..., y : y + patch_resized.shape[0], x : x + patch_resized.shape[1]] = patch_resized
         return patched
 
     def _resize_patch(self, patch: np.ndarray, target_h: int, target_w: int) -> np.ndarray:
@@ -196,18 +191,13 @@ class TriggerSweepDetector(Detector):
         xs = np.linspace(0, w - 1, target_w).astype(int)
         return patch[ys][:, xs]
 
-    def _save_patch_evidence(
-        self, ctx: AuditContext, patch: np.ndarray, rel_path: str
-    ) -> None:
+    def _save_patch_evidence(self, ctx: AuditContext, patch: np.ndarray, rel_path: str) -> None:
         """Save the patch as a PNG evidence file."""
         from cvassure.core.imaging import write_png
 
         h, w = patch.shape[:2]
         # Convert float to uint8
         patch_uint8 = np.clip(patch, 0, 255).astype(np.uint8)
-        pixels = [
-            [tuple(patch_uint8[y, x]) for x in range(w)]
-            for y in range(h)
-        ]
+        pixels = [[tuple(patch_uint8[y, x]) for x in range(w)] for y in range(h)]
         out_path = ctx.out_dir / rel_path
         write_png(out_path, w, h, pixels)
