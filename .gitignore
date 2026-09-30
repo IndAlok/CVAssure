@@ -1,0 +1,9 @@
+data/
+out/
+__pycache__/
+*.pyc
+*.npz
+.venv/
+.pytest_cache/
+.DS_Store
+!docs/p5/**
