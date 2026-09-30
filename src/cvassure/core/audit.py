@@ -55,10 +55,24 @@ class SignedChain:
     silent fallback after a signature is present would drop verification.
     """
 
-    def __init__(self, path: Path, *, deterministic_ts: str | None = None, fresh: bool = True):
+    def __init__(
+        self,
+        path: Path,
+        *,
+        deterministic_ts: str | None = None,
+        fresh: bool = True,
+        private_key_path: Path | None = None,
+        public_key_path: Path | None = None,
+    ):
         from cvassure.provenance import chain as signed
 
-        self._impl = signed.SignedChain(path, deterministic_ts=deterministic_ts, fresh=fresh)
+        self._impl = signed.SignedChain(
+            path,
+            deterministic_ts=deterministic_ts,
+            fresh=fresh,
+            private_key_path=private_key_path,
+            public_key_path=public_key_path,
+        )
         self.path = path
 
     def append(self, event: str, data: Mapping[str, Any]) -> Mapping[str, Any]:
@@ -70,9 +84,21 @@ class SignedChain:
     def head(self) -> str:
         return str(self._impl.head())
 
+    @property
+    def pubkey_fingerprint(self) -> str:
+        return self._impl.pubkey_fingerprint
+
+    def merkle_root(self) -> str | None:
+        return self._impl.merkle_root()
+
 
 def make_chain(
-    path: Path, *, deterministic_ts: str | None = None, fresh: bool = True
+    path: Path,
+    *,
+    deterministic_ts: str | None = None,
+    fresh: bool = True,
+    privkey_path: Path | None = None,
+    pubkey_path: Path | None = None,
 ) -> ChainBackend:
     """Signed chain when it imports, otherwise the local hash chain.
 
@@ -84,7 +110,13 @@ def make_chain(
         importlib.import_module("cvassure.provenance.chain")
     except Exception:
         return LocalSha256Chain(path, deterministic_ts=deterministic_ts, fresh=fresh)
-    return SignedChain(path, deterministic_ts=deterministic_ts, fresh=fresh)
+    return SignedChain(
+        path,
+        deterministic_ts=deterministic_ts,
+        fresh=fresh,
+        private_key_path=privkey_path,
+        public_key_path=pubkey_path,
+    )
 
 
 class ChainBackend(Protocol):
@@ -184,7 +216,7 @@ class VerifyResult:
     head: str
 
 
-def verify_file(path: Path, *, expected_head: str | None = None) -> VerifyResult:
+def verify_file(path: Path, *, expected_head: str | None = None, allow_signatures: bool = False) -> VerifyResult:
     """Recompute the chain. Catches edit, delete, reorder and truncate.
 
     Truncation is caught by `expected_head`, which the pipeline passes from
@@ -218,8 +250,8 @@ def verify_file(path: Path, *, expected_head: str | None = None) -> VerifyResult
                 )
             if entry.get("entry_hash") != entry_hash(entry):
                 return VerifyResult(False, f"line {lineno} body was edited", n, prev)
-            if "sig" in entry and entry["sig"] is not None:
-                # A signature is not checked here, and it is not ignored.
+            if "sig" in entry and entry["sig"] is not None and not allow_signatures:
+                # A signature is not checked here, and it is not ignored unless explicitly allowed.
                 return VerifyResult(
                     False,
                     "entry carries a signature: use SignedChain to verify, not LocalSha256Chain",

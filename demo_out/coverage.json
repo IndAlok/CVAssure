@@ -1,0 +1,163 @@
+{
+  "assumptions": [
+    "All development and evaluation data is publicly available under an applicable licence, or synthetic. No classified, operational, or service-generated data.",
+    "NIST TrojAI benchmark artefacts, BackdoorBench, and other reproducible public backdoor or adversarial-machine-learning material are used as references for attack families only. They are not installed and no artefact from them is vendored.",
+    "Baseline assessment does not retrain the contributed model. The subject model's weights are read and hashed, never updated.",
+    "The audit runs offline and air-gapped. No cloud service, external API, or CDN is contacted.",
+    "Thresholds in this file are UNCALIBRATED starting values and are not a validated detection capability."
+  ],
+  "declared_unsupported": [
+    {
+      "attack_class": "Adaptive attackers",
+      "reason": "An attacker who knows these detectors can choose a trigger this set does not look for."
+    },
+    {
+      "attack_class": "Imperceptible clean-label perturbations",
+      "reason": "Not detected by current methods. The seeded scenario does not attempt them."
+    },
+    {
+      "attack_class": "Hardware / compiler backdoors",
+      "reason": "Out of scope. The audit reads a model file, not a build or a device."
+    }
+  ],
+  "rows": [
+    {
+      "access_levels": [],
+      "attack_class": "Adaptive attackers",
+      "limitations": [
+        "An attacker who knows these detectors can choose a trigger this set does not look for."
+      ],
+      "measured": null,
+      "n_seeds": 0,
+      "reason": "An attacker who knows these detectors can choose a trigger this set does not look for.",
+      "status": "Unsupported"
+    },
+    {
+      "access_levels": [],
+      "attack_class": "Imperceptible clean-label perturbations",
+      "limitations": [
+        "Not detected by current methods. The seeded scenario does not attempt them."
+      ],
+      "measured": null,
+      "n_seeds": 0,
+      "reason": "Not detected by current methods. The seeded scenario does not attempt them.",
+      "status": "Unsupported"
+    },
+    {
+      "access_levels": [],
+      "attack_class": "Hardware / compiler backdoors",
+      "limitations": [
+        "Out of scope. The audit reads a model file, not a build or a device."
+      ],
+      "measured": null,
+      "n_seeds": 0,
+      "reason": "Out of scope. The audit reads a model file, not a build or a device.",
+      "status": "Unsupported"
+    },
+    {
+      "access_levels": [],
+      "attack_class": "Patch / blend trigger in data",
+      "limitations": [],
+      "measured": null,
+      "n_seeds": 0,
+      "reason": "no row in the results table",
+      "status": "Untested"
+    },
+    {
+      "access_levels": [],
+      "attack_class": "Label flipping",
+      "limitations": [],
+      "measured": null,
+      "n_seeds": 0,
+      "reason": "no row in the results table",
+      "status": "Untested"
+    },
+    {
+      "access_levels": [],
+      "attack_class": "Near-duplicate flooding",
+      "limitations": [],
+      "measured": null,
+      "n_seeds": 0,
+      "reason": "no row in the results table",
+      "status": "Untested"
+    },
+    {
+      "access_levels": [],
+      "attack_class": "OOD insertion",
+      "limitations": [],
+      "measured": null,
+      "n_seeds": 0,
+      "reason": "no row in the results table",
+      "status": "Untested"
+    },
+    {
+      "access_levels": [],
+      "attack_class": "Model substitution",
+      "limitations": [],
+      "measured": null,
+      "n_seeds": 0,
+      "reason": "no row in the results table",
+      "status": "Untested"
+    },
+    {
+      "access_levels": [],
+      "attack_class": "Backdoored model",
+      "limitations": [],
+      "measured": null,
+      "n_seeds": 0,
+      "reason": "no row in the results table",
+      "status": "Untested"
+    },
+    {
+      "access_levels": [],
+      "attack_class": "Record tampering / replay",
+      "limitations": [],
+      "measured": null,
+      "n_seeds": 0,
+      "reason": "no row in the results table",
+      "status": "Untested"
+    },
+    {
+      "access_levels": [],
+      "attack_class": "Natural shift (fog vs patch)",
+      "limitations": [],
+      "measured": null,
+      "n_seeds": 0,
+      "reason": "no row in the results table",
+      "status": "Untested"
+    },
+    {
+      "access_levels": [],
+      "attack_class": "Cross-asset linking",
+      "limitations": [],
+      "measured": null,
+      "n_seeds": 0,
+      "reason": "no row in the results table",
+      "status": "Untested"
+    },
+    {
+      "access_levels": [],
+      "attack_class": "Run integrity",
+      "limitations": [
+        "6 finding(s) came from built-in stubs (data.patch_trigger, model.trigger_sweep, records.verify, shift.manipulation, shift.natural). No real measurement exists for those rows."
+      ],
+      "measured": null,
+      "n_seeds": 0,
+      "reason": "stubs ran in this run",
+      "status": "Partial"
+    }
+  ],
+  "status_counts": {
+    "Partial": 1,
+    "Supported": 0,
+    "Unsupported": 3,
+    "Untested": 9
+  },
+  "thresholds": {
+    "T_far": 0.05,
+    "T_support": 0.8,
+    "calibration": "UNCALIBRATED",
+    "min_seeds": 3
+  },
+  "warning": "no results table at None. Every non-declared class is Untested"
+}

@@ -1,0 +1,37 @@
+=== [1/8] Generate Ed25519 keys ===
+private key: demo_out\cvassure_demo.key
+public key:  demo_out\cvassure_demo.pub
+fingerprint: c296325f71ce6baf
+
+=== [2/8] Build scenario seed=42 ===
+Using synthetic scenario (shift.scenario not available)
+
+=== [3/8] Full signed audit ===
+  [PASS] [1/5] Load data                              8 images, 2 contributors (coco, offline)
+  [PASS] [2/5] Data integrity                         1 finding   top source: C-07 (risk 0.90)
+  [PASS] [3/5] Model integrity (white-box)            1 finding(s)  fixture sweep hit on class 0, patch P-03
+  [PASS] [4/5] Inference records                      12 records    2 REJECTED (1 edited, 1 replayed)
+  [PASS] [5/5] Shift assessment                       B-1: drift | B-2: manipulation
+  LINK  model trigger matches the patch seen in samples from C-07 -> severity escalated
+  DISPOSITION  data C-07: QUARANTINE | model: REVIEW | records: 2 REJECTED | shift B-2: QUARANTINE
+  Report: D:\CVAssure\demo_out\report.html
+  Time: 0:00
+
+=== [4/8] QR code ===
+  QR: cvassure:sha256:9d9431fc6e97152e3ad705159f041df91bfc9b204fadc68b1f01f6384ae33279
+
+=== [5/8] Verify clean log ===
+PASS: chain and 16 signatures verified
+
+=== [6/8] Live tamper ===
+  [edit] Modified entry #3 body field
+REJECTED: line 3 (seq 3) signature invalid
+
+=== [7/8] Live replay ===
+  [replay] Duplicated entry #1 at end
+REJECTED (replay): entry_hash duplicates line 1 (seq 1)
+
+=== [8/8] Merkle root ===
+Merkle root: aa6604467b4624e79c85719b63608cef08e7e18db9e241ce0625478c4f1b3429
+
+=== Demo complete in 0:00 ===
