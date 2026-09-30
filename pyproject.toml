@@ -55,4 +55,14 @@ select = ["E", "F", "I", "UP", "B", "C4", "SIM"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
-filterwarnings = ["error::DeprecationWarning:cvassure.*"]
+filterwarnings = [
+    "error::DeprecationWarning:cvassure.*",
+    "ignore:No key paths given to SignedChain:UserWarning",
+]
+
+[project.entry-points."cvassure.detectors"]
+near_duplicate = "cvassure.data_integrity.detectors:NearDuplicateDetector"
+patch_trigger = "cvassure.data_integrity.detectors:PatchTriggerDetector"
+label_flip = "cvassure.data_integrity.detectors:LabelFlipDetector"
+ood = "cvassure.data_integrity.detectors:OODDetector"
+risk_score = "cvassure.data_integrity.detectors:RiskScoreDetector"

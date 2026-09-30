@@ -37,6 +37,7 @@ def generate_keypair(path: Path) -> tuple[Path, Path]:
     priv_path.parent.mkdir(parents=True, exist_ok=True)
     # bytes(sk) is the 32-byte seed; the verify key is sk.verify_key
     priv_path.write_text(bytes(sk).hex() + "\n", encoding="utf-8")
+    priv_path.chmod(0o600)  # private key: owner read/write only
     pub_path.write_text(bytes(sk.verify_key).hex() + "\n", encoding="utf-8")
     return priv_path, pub_path
 

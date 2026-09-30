@@ -109,6 +109,15 @@ class SignedChain:
         elif path.exists() and path.stat().st_size > 0:
             self._seq, self._prev = self._resume()
 
+    def __del__(self) -> None:
+        """Clean up ephemeral key material from disk."""
+        if self._ephemeral_dir is not None:
+            import contextlib
+            import shutil
+
+            with contextlib.suppress(Exception):
+                shutil.rmtree(self._ephemeral_dir, ignore_errors=True)
+
     def _resume(self) -> tuple[int, str]:
         """Resume from an existing log file."""
         last: dict[str, Any] | None = None
