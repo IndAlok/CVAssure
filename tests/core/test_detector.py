@@ -29,7 +29,7 @@ from cvassure.core.finding import Finding, LinkHints, TriggerHint
 class Good(Detector):
     id: ClassVar[str] = "data.good"
     asset: ClassVar[str] = "data"
-    owner: ClassVar[str] = "P2"
+    owner: ClassVar[str] = "data"
     version: ClassVar[str] = "0.1.0"
     requires: ClassVar[frozenset[str]] = frozenset()
 
@@ -63,7 +63,7 @@ def test_detector_cannot_be_instantiated_without_run() -> None:
     class NoRun(Detector):
         id: ClassVar[str] = "x"
         asset: ClassVar[str] = "data"
-        owner: ClassVar[str] = "P1"
+        owner: ClassVar[str] = "core"
         version: ClassVar[str] = "0"
 
     with pytest.raises(TypeError):
@@ -117,13 +117,13 @@ def test_result_defaults_are_inert() -> None:
     assert r.skipped_reason is None and r.runtime_s is None
 
 
-# --- the copy-paste stub from contracts/DETECTOR.md, executed as written. ---
+# A minimal detector, executed as written.
 
 
 class PatchTriggerDetector(Detector):
     id: ClassVar[str] = "data.patch_trigger"
     asset: ClassVar[str] = "data"
-    owner: ClassVar[str] = "P2"
+    owner: ClassVar[str] = "data"
     version: ClassVar[str] = "0.1.0"
     requires: ClassVar[frozenset[str]] = frozenset()
 
@@ -153,7 +153,7 @@ class PatchTriggerDetector(Detector):
                 severity=0.9,
                 confidence=0.85,
                 access_level="not-applicable",
-                limitations="Patch library covers 1 known trigger; novel triggers are missed.",
+                limitations="Patch library covers 1 known trigger. Novel triggers are missed.",
                 disposition="review",
                 source_id=hits[0].source_id,
                 class_label=hits[0].class_id,

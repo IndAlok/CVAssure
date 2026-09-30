@@ -1,14 +1,13 @@
-"""Build the offline install bundle (D15).
+"""Build an offline install bundle.
 
-Air-gapped machines cannot reach PyPI. Build a wheelhouse once on a machine that
-can, copy the whole repo across, and install with no index:
+Air-gapped machines cannot reach PyPI. Build a wheelhouse on a machine that can,
+copy the repo, and install with no index.
 
     python scripts/make_offline_bundle.py --out wheelhouse
     # then, on the offline machine:
     python -m pip install --no-index --find-links wheelhouse -e .
 
-`wheelhouse/` is gitignored on purpose: it is a few tens of megabytes of binaries
-and it belongs in the hand-over medium (USB, internal share), not in git history.
+`wheelhouse/` is gitignored. It is a directory of wheels. Copy it with the repo.
 """
 
 from __future__ import annotations

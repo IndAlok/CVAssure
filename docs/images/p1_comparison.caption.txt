@@ -1,1 +1,0 @@
-Every tool here covers one part of the lifecycle; none of them emit the joined report.

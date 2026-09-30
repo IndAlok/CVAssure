@@ -10,7 +10,7 @@
   "limitations": "The crash itself is the evidence. Spectral signatures were not computed at all.",
   "disposition": "review",
   "linked_findings": [],
-  "detector": { "id": "data.spectral", "version": "0.1.0", "owner": "P2" },
+  "detector": { "id": "data.spectral", "version": "0.1.0", "owner": "data" },
   "tags": [],
   "stub": false,
   "metadata": {

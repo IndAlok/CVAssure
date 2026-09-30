@@ -1,9 +1,4 @@
-"""Coverage tests (D11). Status is derived; a missing row is never Supported.
-
-These are the numbers a judge will probe, so the interesting cases are the
-unflattering ones: a good detector with a bad false-alarm rate, and a great
-number measured on one seed.
-"""
+"""Coverage tests. Status is derived. A missing row is never Supported."""
 
 from __future__ import annotations
 

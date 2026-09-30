@@ -1,8 +1,4 @@
-"""Audit-log chain tests (D9). One test per tamper mode the plan lists.
-
-The chain is the artefact we point at when a judge asks "what stops someone
-editing the output?". If these tests are weak, the answer is decoration.
-"""
+"""Audit-log chain tests. One test for each tamper mode."""
 
 from __future__ import annotations
 
@@ -119,7 +115,7 @@ def test_signature_bearing_entry_is_refused_not_ignored(tmp_path: Path) -> None:
     p.write_text("\n".join(lines) + "\n", encoding="utf-8")
     res = verify_file(p)
     assert not res.ok
-    assert "P4Chain" in res.reason
+    assert "SignedChain" in res.reason
 
 
 def test_fresh_run_starts_a_new_log(tmp_path: Path) -> None:
@@ -176,7 +172,7 @@ def test_canonical_json_is_stable_across_key_insertion_order() -> None:
 
 
 def test_tuple_and_list_hash_the_same() -> None:
-    """json.dumps treats a tuple as an array; the manifest round-trips through json."""
+    """json.dumps treats a tuple as an array. The manifest round-trips through json."""
     assert canonical_sha256({"a": (1, 2)}) == canonical_sha256({"a": [1, 2]})
 
 

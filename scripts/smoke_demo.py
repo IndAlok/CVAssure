@@ -1,12 +1,9 @@
-"""Manual smoke run of the day-2 stub pipeline. Not part of pytest.
+"""Manual smoke run of the stub pipeline. Not part of pytest.
 
 Builds the synthetic scenario, runs the audit, prints the terminal output, then
-verifies the two hashes and the chain. Use it when you want to *see* the run:
+verifies the two hashes and the chain.
 
     python scripts/smoke_demo.py [--out out_demo]
-
-pytest covers the same ground with assertions; this exists so a human can watch
-the CLI print and know the demo will look right.
 """
 
 from __future__ import annotations

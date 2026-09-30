@@ -1,10 +1,8 @@
-"""The CLI (D7). Typer, eight commands, fixed exit codes.
+"""CLI. Eight commands, fixed exit codes.
 
-The terminal shape is fixed by mock-up 1B so two runs diff cleanly. Numbers come
-from the run; nothing is a placeholder. Colours are on by default and `--plain`
-turns them off, because a screenshot with escape codes in it is not a slide.
+Numbers printed by `audit` come from that run. `--plain` turns colours off.
 
-Exit codes are in `errors.ExitCode` and nowhere else.
+Exit codes are in `errors.ExitCode`.
 """
 
 from __future__ import annotations
@@ -111,9 +109,7 @@ def audit(
         console.print(f"[{RED}]{exc}[/]")
         _echo(exc, exc.exit_code)
     except (ValueError, OSError) as exc:
-        # Config and policy errors are ValueError subclasses. A traceback here
-        # would read like a crash; exit 2 reads like a config problem, which is
-        # what it is and what the user can act on.
+        # Config and policy errors are ValueError subclasses. Exit 2.
         console.print(f"[{RED}]{type(exc).__name__}: {exc}[/]")
         _echo(None, ExitCode.USAGE)
 
@@ -130,7 +126,7 @@ def audit(
     console.print(f"[{BLUE}]DISPOSITION  {result.disposition_line}[/]")
 
     if result.stub_ran:
-        console.print(f"[{YELLOW}]STUB  one or more detectors ran as day-2 stubs[/]")
+        console.print(f"[{YELLOW}]STUB  one or more detectors are built-in stubs[/]")
 
     chain_txt = "chain verified" if result.chain_ok else "CHAIN BROKEN"
     chain_style = GREEN if result.chain_ok else RED
@@ -174,7 +170,7 @@ def audit(
 @app.command("verify-log")
 def verify_log(
     log: Path = typer.Argument(..., help="Path to audit.log."),
-    pubkey: Path | None = typer.Option(None, help="Ed25519 public key, once P4 wires it."),
+    pubkey: Path | None = typer.Option(None, help="Ed25519 public key for a signed audit log."),
     manifest: Path | None = typer.Option(
         None, help="run_manifest.json, to check the chain head and catch truncation."
     ),
@@ -303,7 +299,7 @@ def schema(
 
 @app.command()
 def coverage(
-    results: Path | None = typer.Option(None, help="Person 5's results CSV."),
+    results: Path | None = typer.Option(None, help="Results CSV for the coverage statement."),
     rules: Path = typer.Option(Path("configs/coverage_rules.yaml"), help="Coverage rules YAML."),
     as_json: bool = typer.Option(False, "--json", help="Print JSON instead of a table."),
 ) -> None:
@@ -406,18 +402,18 @@ def os_sysinfo_totalram() -> int:
 
 @app.command()
 def demo(seed: int = typer.Option(42, help="Scenario seed.")) -> None:
-    """Call Person 5's build_demo_scenario. BLOCKED-ON: P5 until it exists."""
+    """Build the seeded demo scenario when cvassure.shift.scenario is installed."""
     import importlib
 
     try:
         mod = importlib.import_module("cvassure.shift.scenario")
     except Exception as exc:
         raise BlockedOn(
-            "P5", f"build_demo_scenario is not importable ({type(exc).__name__})"
+            "scenario", f"build_demo_scenario is not importable ({type(exc).__name__})"
         ) from exc
     builder = getattr(mod, "build_demo_scenario", None)
     if builder is None:
-        raise BlockedOn("P5", "cvassure.shift.scenario has no build_demo_scenario")
+        raise BlockedOn("scenario", "cvassure.shift.scenario has no build_demo_scenario")
     scenario = builder(seed=seed)
     console = _console(False)
     console.print(f"scenario seed {seed}")

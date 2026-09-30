@@ -1,11 +1,8 @@
-"""Integration tests (D13). The full stub audit, end to end.
+"""Integration tests for the stub audit.
 
-These are the tests that answer "does the demo command work?". They run the real
-pipeline on synthetic fixtures and assert on the artefacts, not on internals.
-
-Everything here is SYNTHETIC. `fixtures/synthetic_scenario.py` generates a small
-COCO dataset, a JSONL record file and a model placeholder. Person 5's
-`build_demo_scenario(seed=42)` replaces it.
+These run the pipeline on synthetic fixtures and assert on the artefacts.
+`fixtures/synthetic_scenario.py` generates a small COCO dataset, a JSONL record
+file, and a minimal ONNX graph.
 """
 
 from __future__ import annotations
@@ -75,7 +72,7 @@ def test_all_five_output_files_are_written(run) -> None:
         "run_manifest.json",
         "link_report.json",
     ):
-        assert (run.out_dir / name).is_file(), f"{name} is missing; P4 cannot render"
+        assert (run.out_dir / name).is_file(), f"{name} is missing"
 
 
 def test_every_emitted_finding_validates(run) -> None:
@@ -214,7 +211,7 @@ def test_exit_4_on_a_tampered_log(scenario, tmp_path: Path) -> None:
     """Edit a value inside an entry, leave the recorded hash alone.
 
     Renaming an event would also change the entry_hash, so it proves nothing
-    specific; changing a data value is exactly the attack the chain exists to
+    specific. Changing a data value is exactly the attack the chain exists to
     catch, and `verify-log` must reject it.
     """
     out = tmp_path / "o5"
@@ -383,10 +380,10 @@ def test_coverage_reports_a_missing_results_table(run) -> None:
 
 
 def test_no_ground_truth_attribute_in_the_audit_module() -> None:
-    """Rule 3, enforced on the source rather than trusted.
+    """The pipeline source must not name a ground-truth manifest.
 
-    `run_manifest.json` is Person 1's own output, so the ban is on the *input*
-    ground truth: the scenario manifest and the scenario builder.
+    The ban is on the input ground truth, the scenario manifest, and the
+    scenario builder.
     """
     src = (REPO / "src" / "cvassure" / "core" / "pipeline.py").read_text(encoding="utf-8")
     code = _code_only(REPO / "src" / "cvassure" / "core" / "pipeline.py")
@@ -495,7 +492,7 @@ def test_manifest_records_versions_hashes_and_stage_status(run) -> None:
     assert m["seed"] == 42
 
 
-# --- the plan Section 1 Done list, asserted rather than narrated ---
+# Output files the audit must write.
 
 
 def _stage(run, n: int):
@@ -612,18 +609,14 @@ def test_model_digest_is_the_digest_of_the_file_on_disk(scenario) -> None:
     assert recorded == declared
 
 
-def test_stage_3_reports_blocked_on_p3_when_the_wrapper_is_missing() -> None:
-    """A missing teammate must not be reported as a missing input.
-
-    `_load_model` is the only call site, so it is the only place the two cases can
-    be told apart. This asserts the distinction rather than trusting the message.
-    """
+def test_stage_3_distinguishes_a_missing_file_from_a_loader_error() -> None:
+    """A missing file and a loader error are different results."""
     from cvassure.core import pipeline
 
     missing = Path("C:/definitely/not/here.onnx")
     wrapper, why = pipeline._load_model(missing, "white-box")
     assert wrapper is None
-    assert why is None, "a path that does not exist is not P3's fault"
+    assert why is None, "a path that does not exist is not a loader failure"
 
     real = REPO / ".nonexistent_model_probe.onnx"
     real.write_bytes(b"x")
@@ -654,7 +647,7 @@ def test_required_capability_skips_when_no_model_is_loaded(tmp_path: Path) -> No
     class NeedsWeights(Detector):
         id = "model.needs_weights"
         asset = "model"
-        owner = "P3"
+        owner = "model"
         version = "0"
         requires = frozenset({"weights"})
 
@@ -674,7 +667,7 @@ def test_required_capability_skips_when_no_model_is_loaded(tmp_path: Path) -> No
     )
     assert result.status == "skipped"
     assert result.skipped_reason is not None
-    assert "no model wrapper" in result.skipped_reason
+    assert "no model wrapper" in result.skipped_reason.lower()
 
 
 def test_detector_timeout_becomes_an_error_finding(tmp_path: Path) -> None:
@@ -687,7 +680,7 @@ def test_detector_timeout_becomes_an_error_finding(tmp_path: Path) -> None:
     class Slow(Detector):
         id = "data.slow"
         asset = "data"
-        owner = "P2"
+        owner = "data"
         version = "0"
         requires = frozenset()
 

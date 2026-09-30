@@ -1,9 +1,8 @@
 # CVAssure default policy. Declarative when/then. No code, no eval, no exec.
 #
-# Person 1 owns this file. Detectors may propose a disposition; THIS file decides.
-# The cut-offs below are STARTING VALUES, marked UNCALIBRATED in
-# docs/p1/DECISIONS.md. They get fitted on seeded data that includes negative
-# controls before any headline number is quoted.
+# Detectors may propose a disposition. This file decides.
+# The cut-offs below are starting values. They are uncalibrated until they are
+# fitted on seeded data that includes negative controls.
 #
 # Do NOT put a contributor id, a class id, or a dataset name in a rule. The demo
 # story appears because the inputs contain it, not because the policy knows it.
@@ -26,8 +25,7 @@ rules:
     when: { asset: data, severity: { gte: 0.8 }, confidence: { gte: 0.6 } }
     then: { disposition: quarantine, scope: source }
 
-  # A suspicious model is reviewed. A model is a single artefact, not a bulk
-  # pull, and mock-up 1B says REVIEW for the linked model finding.
+  # A suspicious model is reviewed. A link does not quarantine the model.
   - id: R2-review-model
     when: { asset: model, severity: { gte: 0.5 } }
     then: { disposition: review }

@@ -10,7 +10,7 @@
   "limitations": "MMD/KS/PSI agree on direction. No ground truth for true cause.",
   "disposition": "accept",
   "linked_findings": [],
-  "detector": { "id": "shift.natural", "version": "0.1.0", "owner": "P5" },
+  "detector": { "id": "shift.natural", "version": "0.1.0", "owner": "shift" },
   "batch_id": "B-2",
   "sample_count": 40,
   "tags": ["drift"],

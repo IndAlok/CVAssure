@@ -1,8 +1,4 @@
-"""Registry tests (D5). Bad plugin, duplicate id, access skip, crash, timeout.
-
-The registry's job is to make a broken teammate's detector a visible fact rather
-than a crashed run or, worse, a silent omission.
-"""
+"""Registry tests. A broken detector is a visible finding, not a crashed run."""
 
 from __future__ import annotations
 
@@ -20,7 +16,7 @@ from cvassure.core.registry import build_registry, order_registry
 class _Real(Detector):
     id: ClassVar[str] = "data.patch_trigger"
     asset: ClassVar[str] = "data"
-    owner: ClassVar[str] = "P2"
+    owner: ClassVar[str] = "data"
     version: ClassVar[str] = "1.0.0"
     requires: ClassVar[frozenset[str]] = frozenset()
 
@@ -50,7 +46,7 @@ def test_every_stub_is_loud() -> None:
 
 
 def test_a_real_module_replaces_the_stub_with_the_same_id(tmp_path: Path) -> None:
-    """The day-2 to day-6 transition. A teammate's PR just works."""
+    """A real module replaces the stub with the same id."""
     mod = tmp_path / "real_patch.py"
     mod.write_text(
         textwrap.dedent(
@@ -61,7 +57,7 @@ def test_a_real_module_replaces_the_stub_with_the_same_id(tmp_path: Path) -> Non
             class RealPatch(Detector):
                 id: ClassVar[str] = "data.patch_trigger"
                 asset: ClassVar[str] = "data"
-                owner: ClassVar[str] = "P2"
+                owner: ClassVar[str] = "data"
                 version: ClassVar[str] = "1.0.0"
                 requires: ClassVar[str] = frozenset()
 
@@ -96,7 +92,7 @@ def test_two_real_modules_with_one_id_is_an_error(tmp_path: Path) -> None:
                 class D(Detector):
                     id: ClassVar[str] = "data.duplicate"
                     asset: ClassVar[str] = "data"
-                    owner: ClassVar[str] = "P2"
+                    owner: ClassVar[str] = "data"
                     version: ClassVar[str] = "1.0.0"
                     requires: ClassVar[str] = frozenset()
 
@@ -163,7 +159,7 @@ def test_a_broken_contract_is_rejected_loudly(tmp_path: Path) -> None:
             class Bad(Detector):
                 id: ClassVar[str] = "data.bad"
                 asset: ClassVar[str] = "not_an_asset"
-                owner: ClassVar[str] = "P2"
+                owner: ClassVar[str] = "data"
                 version: ClassVar[str] = "1.0.0"
                 requires: ClassVar[str] = frozenset()
 

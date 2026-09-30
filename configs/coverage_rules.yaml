@@ -1,11 +1,10 @@
-# Coverage status rules (D11). Person 1 owns this file.
+# Coverage status rules.
 #
-# Status is DERIVED from Person 5's results_table.csv by the rules below.
+# Status is derived from results_table.csv by the rules below.
 # It is never hand-written. A class with no row is Untested, never Supported.
 #
-# A measured row NEVER flips a declared-Unsupported class. If one of the three
-# becomes measurable, that is a config change plus a CHANGELOG line, in front of
-# everyone, not a silent edit.
+# A measured row does not flip a declared-Unsupported class. Changing one of
+# those three classes is a config change that must be documented.
 
 version: 1
 name: cvassure-coverage-rules

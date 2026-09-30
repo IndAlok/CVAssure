@@ -1,184 +1,202 @@
 # CVAssure
 
-Offline, CPU-only integrity assurance for training data, the model, and inference records
-in a multi-contributor computer-vision pipeline.
+Offline, CPU-only integrity checks for training data, a model, and inference records in a multi-contributor computer-vision pipeline.
 
-One command audits all three, writes Findings in one schema, links a model trigger to the
-contributor samples that carry the same patch, and writes a tamper-evident audit log plus an
-offline HTML report. The coverage statement lists attack classes the tool does not support.
+One command audits all three. It writes findings in one schema, links a model trigger to contributor samples that carry the same patch, and writes a tamper-evident audit log plus an HTML report that does not fetch anything from the network. The coverage statement lists attack classes the tool does not support.
 
-The spine runs today on day-2 stubs. `cvassure audit --strict` exits 5 until Persons 2-5
-replace those stubs. Do not put a stub run on a slide.
+The built-in detectors are stubs. `cvassure audit --strict` exits 5 while any stub runs. A stub sets `stub` to true and starts its reason with `[STUB]`. Replace a stub by registering a real detector with the same id.
 
-Built for [SIH26228](https://sih2026.vuce.in/ps/SIH26228) — *Trustworthy Computer Vision
-Integrity Assurance for Data, Models and Inference Outputs in Multi-Contributor Pipelines*,
-Ministry of Defence / Indian Army (DGIS), theme Blockchain & Cybersecurity.
-
----
+The audit does not open a socket, does not call a cloud API, and does not send telemetry. It does not retrain the submitted model. Data used with it must be synthetic or under a public licence. Do not put classified, operational, or service-generated data in fixtures or in a run.
 
 ## Install
 
+Python 3.11.
+
 ```bash
 python -m venv .venv
-# Windows
 .venv\Scripts\activate
-# Linux / macOS
-source .venv/bin/activate
-
 pip install -e ".[dev]"
 ```
 
-Python 3.11. No GPU. No network needed after install.
+On Linux or macOS, activate with `source .venv/bin/activate`.
 
-## The command
+After install, the audit command does not need a network.
 
-```bash
-cvassure audit --data ./demo/data --model ./demo/model.onnx --records ./demo/records
-```
-
-Output shape is fixed so it can be diffed between runs:
-
-```text
-[1/5] Load data (coco, offline) .............. ok       10000 images, 2 contributors
-[2/5] Data integrity ......................... 1 finding    top source: C-07 (risk 0.90)
-[3/5] Model integrity (white-box) ............ 1 finding    white-box trigger sweep hit
-[4/5] Inference records ...................... 120 records  2 REJECTED (1 edited, 1 replayed)
-[5/5] Shift assessment ....................... B-2: drift | B-3: manipulation
-LINK  model trigger matches the patch seen in samples from C-07 -> severity escalated
-DISPOSITION  data C-07: QUARANTINE | model: REVIEW | records: 2 REJECTED
-Report: out/report.html (sha256 4f2a…)  Audit log: out/audit.log (chain verified)  Time: 0:12
-```
-
-*(Layout only. A real run prints numbers from that run, and a stub run prints a STUB line.)*
-
-Other commands: `verify-log`, `verify-report`, `list-detectors`, `schema`, `coverage`, `doctor`,
-`demo`. Full list in `Person1_Complete_Plan.md` §7.1.
-
-## Offline install
-
-For an air-gapped machine, build the wheelhouse once on a connected machine:
+## Audit
 
 ```bash
-python scripts/make_offline_bundle.py
+cvassure audit --data ./data --model ./model.onnx --records ./records.jsonl
 ```
 
-Then on the target:
+Inputs are a COCO JSON or YOLO txt dataset, an ONNX or TorchScript model, and JSON Lines inference records. The tool is not tied to one architecture or one dataset.
 
-```bash
-pip install --no-index --find-links wheelhouse cvassure
-```
+`--access` is `white-box`, `gray-box`, or `black-box`. A detector whose `requires` set is not covered by the wrapper is skipped and is not called. If no wrapper is loaded, the same skip applies.
 
-`wheelhouse/` is gitignored. The audit command itself never opens a socket; a test runs the
-whole pipeline with `socket.socket` disabled.
+`--strict` exits 5 when a stub ran. `--fail-on review`, `--fail-on quarantine`, or `--fail-on rejected` exits 10 when a finding has that disposition. `--reproducible` freezes timestamps so `findings.json` and `payload_sha256` match across runs. The CLI still prints the wall-clock time.
 
----
+Other commands:
 
-## Folder owners
+- `verify-log` checks the audit log hash chain.
+- `verify-report` checks the two report hashes.
+- `list-detectors` prints the loaded detectors.
+- `schema` prints the Finding JSON Schema.
+- `coverage` builds the coverage statement from a results CSV.
+- `doctor` reports the local environment.
+- `demo` calls `cvassure.shift.scenario.build_demo_scenario` when that function exists. If it does not, the command exits 2.
 
-| path | owner | contents |
-|---|---|---|
-| `src/cvassure/core/` | **P1** | schema, detector contract, registry, pipeline, CLI, policy, audit log, linking, coverage |
-| `src/cvassure/data_integrity/` | P2 | embeddings, label flip, near-duplicate, OOD, spectral, source risk, adapters |
-| `src/cvassure/model_integrity/` | P3 | wrapper + access tiers, fingerprint, weight digest, trigger sweep, reconstruction |
-| `src/cvassure/provenance/` | P4 | signed records, hash chain, Merkle, HTML report, QR |
-| `src/cvassure/shift/` | P5 | scenario builder, drift vs manipulation, metrics |
-| `contracts/` | P1 writes, **owners edit** | frozen interfaces, day 1 |
-| `docs/p1/` | P1 | decisions, progress, day-1 message, handover |
+Exit codes:
 
-Enforced by `.github/CODEOWNERS`.
+- 0, the run finished.
+- 2, usage or config error.
+- 3, a detector or schema check failed.
+- 4, audit log or report verification failed.
+- 5, `--strict` and a stub ran.
+- 10, `--fail-on` matched a disposition.
+
+`--strict` is checked before the other failure codes.
+
+## Output
+
+A run writes these files under `--out`, which defaults to `out/`:
+
+- `findings.json`
+- `quarantine.json`
+- `coverage.json`
+- `run_manifest.json`
+- `link_report.json`
+- `audit.log`
+- `report.html`
+- evidence images under `evidence/`
+
+`payload_sha256` is the SHA-256 of the canonical findings, coverage, and manifest. The HTML header embeds that digest. `file_sha256` is the SHA-256 of the HTML bytes. The CLI prints it, and the audit log stores it. The HTML file does not contain its own digest.
+
+The audit log is JSON Lines. Each entry has `prev_hash` and `entry_hash`. The first `prev_hash` is 64 zeros. The writer fsyncs each append. `verify-log` detects an edit, a deletion, a reorder, and a truncation when the expected head from `run_manifest.json` is supplied. `LocalSha256Chain` does not sign entries. An entry that already carries a signature is refused by that verifier. If `cvassure.provenance.chain.SignedChain` imports, the pipeline uses it instead.
+
+## Findings
+
+JSON Schema 2020-12, `additionalProperties` false. Free-form values belong in `metadata`. The committed schema is `contracts/finding.schema.json`. Draft findings, which have no id yet, use `contracts/finding.draft.schema.json`.
+
+Required fields include `schema_version` `1.0`, `id` matching `F-` and at least three digits, `asset`, `reason`, `evidence`, `severity`, `confidence`, `access_level`, `limitations`, `disposition`, and `linked_findings`. The pipeline assigns `id`. `asset` is `data`, `model`, `records`, `shift`, or `system`. `severity` and `confidence` are finite numbers from 0 to 1. `disposition` is `accept`, `review`, `quarantine`, or `rejected`. Evidence paths are relative to the run directory. An empty evidence list is allowed only for `asset` `system`.
+
+A detector crash becomes one `system` finding, and the run continues with exit 3.
+
+## Policy
+
+`policies/default.yaml` decides disposition. Detectors may propose one. Policy overwrites it. An emitted finding that matches no rule is `review`. The default disposition cannot be `accept`.
+
+Precedence is `rejected`, then `quarantine`, then `review`, then `accept`. The strongest match wins. A later rule wins a tie.
+
+The file is loaded with `yaml.safe_load` and checked against `contracts/policy.schema.json`. There is no `eval` and no `exec`. An unknown field or operator is exit 2.
+
+The numeric cut-offs in that file are uncalibrated starting values. Fit them on seeded data that includes negative controls before quoting them as measured thresholds. Do not put a contributor id, a class id, or a dataset name in a rule.
+
+Current starting rules:
+
+- Data with severity at least 0.8 and confidence at least 0.6 is quarantined at source scope.
+- A model finding with severity at least 0.5 is review. A link does not quarantine the model.
+- A records finding tagged `verification_failed` is rejected.
+- A shift finding tagged `manipulation` is quarantined at batch scope.
+
+## Linking
+
+The linker reads `link_hints` only. It does not read a ground-truth attack manifest.
+
+The score uses a class gate, then the components that both sides actually provide. Identity, from `patch_id`, has weight 0.5. Overlap, from IoU, has weight 0.2. Pattern, from normalised cross-correlation, has weight 0.3. Weights are renormalised over the components that exist. `tau_link` in `configs/demo.yaml` starts at 0.50 and is uncalibrated. A link can raise model severity with a noisy-OR. The linker does not change disposition.
+
+Evidence paths that are absolute, contain `..`, or resolve outside the run directory are ignored.
+
+## Coverage
+
+Status is derived from a results CSV and `configs/coverage_rules.yaml`. A missing measurement is `Untested`, never `Supported`. A missing CSV is not an error. The CLI prints a warning, and non-declared classes stay `Untested`.
+
+Three classes stay `Unsupported` by declaration:
+
+- Adaptive attackers.
+- Imperceptible clean-label perturbations.
+- Hardware or compiler backdoors.
+
+A measured row does not flip one of those three. Changing that list is a config change that must be documented.
 
 ## Adding a detector
 
-Subclass `Detector`, set five class attributes, return a `DetectorResult`. Full contract in
-[`contracts/DETECTOR.md`](contracts/DETECTOR.md); the Finding contract is
-[`contracts/FINDING.md`](contracts/FINDING.md).
+Subclass `Detector`, set `id`, `asset`, `owner`, `version`, and `requires`, and implement `run`. Return a `DetectorResult`. Do not open sockets, do not write outside `ctx.out_dir`, and do not read a ground-truth attack manifest.
 
 ```python
 from cvassure.core.detector import AuditContext, Detector, DetectorResult
-from cvassure.core.finding import Finding
 
 
 class MyDetector(Detector):
     id = "data.my_check"
     asset = "data"
-    owner = "P2"
+    owner = "data"
     version = "0.1.0"
-    requires = frozenset()  # wrapper capabilities you need
+    requires = frozenset()
 
     def run(self, ctx: AuditContext) -> DetectorResult:
-        res = DetectorResult(summary="no signal")
-        # res.findings.append(Finding.draft(...))
-        return res
+        return DetectorResult(summary="no signal")
 ```
 
-Register it in your `pyproject.toml`:
+Register it:
 
 ```toml
 [project.entry-points."cvassure.detectors"]
 my_check = "cvassure.data_integrity.my_check:MyDetector"
 ```
 
-and list the module in `configs/demo.yaml` so the load order is explicit and reproducible. A
-real module always wins over the day-2 stub with the same id.
+List the module in the run config so load order is explicit. A real module with the same id replaces the built-in stub. Two real modules with the same id are a config error. An import failure becomes a visible `system` finding.
 
-## Regenerating the demo
+## Layout
+
+- `src/cvassure/core/` holds the schema, detector contract, registry, pipeline, CLI, policy, audit log, linking, and coverage.
+- `src/cvassure/data_integrity/` holds training-data checks.
+- `src/cvassure/model_integrity/` holds the model wrapper. The shipped `load_model` records a real SHA-256 of the file and does not open an ONNX session or a TorchScript module. `is_stub` is true.
+- `src/cvassure/provenance/` is where a signed chain and `render_report` plug in.
+- `src/cvassure/shift/` is where shift checks and `build_demo_scenario` plug in.
+- `contracts/` holds the JSON Schemas the code loads.
+- `policies/default.yaml` is the default policy.
+- `configs/` holds the demo run config and the coverage rules.
+- `scripts/make_offline_bundle.py` builds a wheelhouse.
+- `scripts/nightly_demo.py` regenerates seed 42 and audits it.
+- `scripts/smoke_demo.py` runs the same path and prints the CLI output.
+- `tests/` holds unit and integration tests. `tests/fixtures/synthetic_scenario.py` builds a small synthetic dataset, unsigned JSONL records, and a tiny ONNX graph. That graph is not a trained or backdoored model. Contributor ids in that fixture are fixture values. Policy, the linker, and core logic do not hard-code them.
+
+## Offline install
+
+On a connected machine:
 
 ```bash
-cvassure demo                              # P5's build_demo_scenario(seed=42)
-cvassure audit --data ./demo/data --model ./demo/model.onnx --records ./demo/records --strict
+python scripts/make_offline_bundle.py
 ```
 
-If `build_demo_scenario` is not importable yet, `cvassure demo` prints `BLOCKED-ON: P5` and
-exits 2. That is the honest answer, not an error.
+On the air-gapped machine:
 
----
+```bash
+pip install --no-index --find-links wheelhouse cvassure
+```
 
-## The honesty rule
-
-**The coverage statement lists the attack classes CVAssure does not support, and that list is
-part of the deliverable, not a footnote.** Three are declared `Unsupported` from the start and
-stay that way unless we change config and write a changelog line:
-
-- **Adaptive attackers** — an attacker who knows our detectors.
-- **Imperceptible clean-label perturbations** — not detected by current methods.
-- **Hardware / compiler backdoors** — out of scope.
-
-Everything else is `Untested` until a measurement exists. A class with no row is `Untested`,
-never `Supported`. A high-severity finding with no matching policy rule gets the default
-`review`, never a silent `accept`.
-
-Related, and enforced in code rather than in this file:
-
-- **Offline and air-gapped.** No cloud API, no CDN, no telemetry.
-- **Data is synthetic or public-licence.** No classified, operational, or service-generated
-  data, in fixtures, demos, or docs. This is the problem statement's dataset rule.
-- **The baseline assessment never retrains the submitted model.**
-- **White-box methods skip honestly.** If the model is black-box, the method is reported
-  unavailable — it never pretends to have run.
-- **A crash is a finding.** A detector that raises produces an `asset=system` Finding naming it.
-  A missing method is never a clean result.
-- **No invented numbers.** Every printed value was computed in that run. Thresholds are marked
-  `UNCALIBRATED` in `docs/p1/DECISIONS.md` until they are fitted on data with negative controls.
-- **No hard-coded contributor or class ids** in policy, linker, or core. The demo story appears
-  because the inputs contain it.
-
-## Data formats
-
-COCO JSON and YOLO txt in, ONNX or PyTorch/TorchScript model in, JSON Lines inference records
-in. Not hard-coded to one architecture or one dataset. Day-2 adapters are thin readers that
-build an internal sample table; Person 2 owns the full adapters and may replace them.
+`wheelhouse/` is gitignored.
 
 ## Development
 
 ```bash
-pytest                      # unit + integration
-ruff check . && ruff format --check .
-pytest --disable-socket      # proves the audit path needs no network
+pytest
+ruff check .
+ruff format --check .
+pytest --disable-socket
 ```
 
-CI runs Ubuntu and Windows on Python 3.11. Nightly regenerates seed 42 and audits it. The
-uploaded `out/` artefact is the regression diff.
+CI runs Ubuntu and Windows on Python 3.11. The nightly workflow runs `scripts/nightly_demo.py`. It does not pass `--strict` while stubs are still registered.
+
+Core dependencies are pydantic, PyYAML, jsonschema, typer, rich, and numpy. Matplotlib and Pillow are not core imports. IoU and normalised cross-correlation use NumPy.
+
+## What is not in this tree
+
+Signed audit-log entries, a Merkle tree, and a replacement HTML dashboard. Provide `cvassure.provenance.chain.SignedChain` and `cvassure.provenance.render_report` to take those over. Until then the local SHA-256 chain and the built-in HTML report are what a run writes.
+
+Red-team mode and signed dataset or model cards are not implemented.
+
+Coverage percentages are not invented. Without a results CSV, classes other than the three declared unsupported rows are `Untested`.
 
 ## Licence
 
-MIT. See [`LICENSE`](LICENSE).
+MIT. See `LICENSE`.

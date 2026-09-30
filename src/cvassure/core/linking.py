@@ -1,15 +1,14 @@
-"""Cross-asset linking (D10). Evidence in, links out, or nothing.
+"""Cross-asset linking. Evidence in, links out, or nothing.
 
 Decides whether a model trigger finding and a data patch finding refer to the
-same visual trigger, using only the `link_hints` both sides emitted. It cannot
-read the ground truth, and it is allowed to print nothing.
+same visual trigger, using only the `link_hints` both sides emitted. It does not
+read ground truth. It may print nothing.
 
-Score from whatever evidence **both** sides actually have, then renormalise the
+The score uses the evidence both sides actually have, then renormalises the
 configured weights over the components that exist. A black-box sweep with a
-patch id and a class links on identity alone, and says so.
+patch id and a class links on identity alone.
 
-IoU and NCC are in numpy. OpenCV is not a dependency and adding it to core for a
-bounding box would be absurd.
+IoU and NCC are computed with NumPy. OpenCV is not a dependency.
 """
 
 from __future__ import annotations
@@ -85,14 +84,8 @@ def _read_gray(path: Path) -> np.ndarray | None:
 
     Numpy reads `.npy` natively, with no dependency. PNG needs a decoder, and
     Pillow is deliberately **not** a core dependency, so the import is attempted
-    lazily: if Pillow is installed the `pattern` component becomes reachable on
-    the PNG templates P2 and P3 actually emit, and if it is not, the component is
-    reported absent.
-
-    That is the honest trade. The plan's rule is "no OpenCV in core" and no heavy
-    import inside `cvassure.core`; a lazily-imported optional decoder satisfies
-    both, and a missing decoder degrades to "no pattern evidence" rather than to
-    a wrong score. `cvassure doctor` reports whether Pillow is present.
+    lazily. If Pillow is installed, the `pattern` component can read PNG templates.
+    If it is not, that component is absent.
     """
     if not path.is_file():
         return None
@@ -104,7 +97,7 @@ def _read_gray(path: Path) -> np.ndarray | None:
             return None
     if suffix in (".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff", ".webp"):
         try:
-            from PIL import Image  # optional; see docstring
+            from PIL import Image  # optional. See the docstring.
         except ImportError:
             return None
         try:
@@ -193,7 +186,7 @@ def _renormalise(components: dict[str, float], cfg: LinkConfig) -> tuple[float, 
     total = sum(used.values())
     if total <= 0:
         # Every present component has weight 0. Equal split is the least-bad
-        # reading; tau_link still decides, and weights_used records what happened.
+        # reading. tau_link still decides, and weights_used records what happened.
         used = dict.fromkeys(components, 1.0)
         total = float(len(used))
     weights = {k: v / total for k, v in used.items()}
@@ -280,7 +273,7 @@ def apply_links(
         )
 
         note = (
-            f"Linked to {df.id} on evidence {sorted(link.components)}; "
+            f"Linked to {df.id} on evidence {sorted(link.components)}. "
             "pattern similarity was not available."
             if "pattern" not in link.components
             else ""

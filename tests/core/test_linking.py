@@ -1,12 +1,6 @@
-"""Cross-asset linking tests (D10), with the negative controls.
+"""Cross-asset linking tests, including the cases that must not link.
 
-The negative cases matter more than the positive one. A linker that always links
-scores 1.0 recall and demonstrates nothing, so plan §10.3 asks for the variants
-where nothing should link. These are the synthetic stand-ins until P2 and P3 land
-a real backdoored model.
-
-Images are generated here: small .npy arrays, written and read by our own code.
-No real demo photos, no downloaded dataset.
+Images are generated here as small .npy arrays. No downloaded dataset.
 """
 
 from __future__ import annotations
@@ -157,12 +151,10 @@ def test_ncc_resamples_different_sizes() -> None:
 
 
 def test_same_patch_id_and_matching_geometry_links(tmp_path: Path) -> None:
-    """Matching geometry and pattern link even with no identity component.
+    """Matching geometry and pattern link even when identity is absent.
 
-    A `reconstructed` model finding carries no `patch_id` (the schema forbids
-    it), so identity is legitimately absent. That is the demo case: P2 names a
-    library patch, P3 reconstructs a mask, and the two are matched on geometry
-    and appearance.
+    A reconstructed model finding has no patch_id. The schema forbids it.
+    Geometry and appearance still score.
     """
     ev = _evidence_dir(tmp_path)
     _write_npy(ev / "tpl.npy", _checker())
@@ -274,7 +266,7 @@ def test_no_hints_no_link(tmp_path: Path) -> None:
 
 def test_one_sided_hints_do_not_link(tmp_path: Path) -> None:
     links, _ = find_links([_data_finding(), _model_finding(patch_id=None)], CFG, tmp_path)
-    # geometry alone can link if it is strong; identity alone cannot be faked.
+    # geometry alone can link if it is strong. Identity alone cannot be faked.
     # A reconstructed model vs a library patch with no images: no identity, no
     # pattern, and the boxes are close, so this is the honest "not enough".
     assert all(found.score >= CFG.tau_link for found in links)

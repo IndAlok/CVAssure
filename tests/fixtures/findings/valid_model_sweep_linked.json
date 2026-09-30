@@ -10,7 +10,7 @@
   "limitations": "Neural Cleanse style mask. Falses not characterised. No weights re-trained.",
   "disposition": "review",
   "linked_findings": ["F-001"],
-  "detector": { "id": "model.trigger_sweep", "version": "0.1.0", "owner": "P3" },
+  "detector": { "id": "model.trigger_sweep", "version": "0.1.0", "owner": "model" },
   "class_label": 0,
   "sample_ids": [],
   "sample_count": 1,

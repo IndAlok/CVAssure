@@ -1,18 +1,13 @@
-"""The one object every detector emits.
+"""The object every detector emits.
 
-Frozen day 1, tag ``contracts-v1``. Changes need a changelog line and a team
-message, not a quiet edit. See ``contracts/FINDING.md``.
+`additionalProperties` is false at the top level. Unknown keys fail validation.
+Detector-specific numbers go in `metadata`.
 
-Shape rules worth knowing before you read the fields:
+`severity` is impact if the finding is true. `confidence` is belief that it is
+true. They are separate fields.
 
-* ``additionalProperties: false`` at the top level. Unknown keys are a bug, not
-  an extension point. Detector-specific numbers go in ``metadata``.
-* ``severity`` is impact if the finding is true. ``confidence`` is belief that it
-  is true. They never stand in for each other.
-* ``limitations`` is required and non-empty. A detector that cannot say what it
-  did not check has not finished.
-* ``disposition`` is written by the policy engine, not by the detector. Detectors
-  may propose one; policy overwrites it before write-out.
+`limitations` is required and non-empty. `disposition` is written by the policy
+engine. A detector may propose one. Policy overwrites it before write-out.
 """
 
 from __future__ import annotations
@@ -83,7 +78,7 @@ MAX_SAMPLE_IDS = 50
 MAX_REASON = 300
 MIN_REASON = 10
 MIN_LIMITATIONS = 10
-MAX_LINKS = 50  # linked_findings cap; a finding that links to everything links to nothing
+MAX_LINKS = 50  # linked_findings cap. A finding that links to everything links to nothing.
 
 REQUIRED_FIELDS: tuple[str, ...] = (
     "schema_version",
@@ -101,7 +96,7 @@ REQUIRED_FIELDS: tuple[str, ...] = (
 
 
 class DetectorRef(BaseModel):
-    """Who produced this. The pipeline fills it; detectors do not."""
+    """Who produced this. The pipeline fills it. Detectors do not."""
 
     model_config = ConfigDict(extra="forbid")
     id: str = Field(min_length=1)
@@ -130,17 +125,16 @@ class TriggerHint(BaseModel):
             raise ValueError("reconstructed trigger requires mask_path")
         if self.kind == "reconstructed" and self.patch_id:
             raise ValueError(
-                "reconstructed trigger has no patch_id; that would fake an identity match"
+                "reconstructed trigger has no patch_id. That would fake an identity match"
             )
         return self
 
 
 class LinkHints(BaseModel):
-    """Evidence the cross-asset linker reads. Never a verdict.
+    """Evidence the cross-asset linker reads. Not a verdict.
 
-    P2 emits this on data findings tagged ``patch_trigger`` or ``blend_trigger``.
-    P3 emits it on model findings tagged ``trigger_sweep_hit`` or
-    ``trigger_reconstructed``.
+    Data findings tagged `patch_trigger` or `blend_trigger` carry this.
+    Model findings tagged `trigger_sweep_hit` or `trigger_reconstructed` carry it.
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -184,7 +178,7 @@ class PolicyRef(BaseModel):
 
 
 class Finding(BaseModel):
-    """One assurance flag. See ``contracts/FINDING.md`` before extending."""
+    """One assurance flag."""
 
     model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
 
@@ -220,7 +214,7 @@ class Finding(BaseModel):
     def draft(cls, **fields: Any) -> Finding:
         """Build a finding without an id. The pipeline assigns ids and sorts."""
         if "id" in fields:
-            raise TypeError("draft findings carry no id; the pipeline assigns it")
+            raise TypeError("draft findings carry no id. The pipeline assigns it")
         return cls(**fields)
 
     def to_final(self, finding_id: str) -> Finding:
@@ -228,7 +222,7 @@ class Finding(BaseModel):
         return type(self).model_validate({**self.model_dump(), "id": finding_id})
 
     def with_detector(self, detector_id: str, version: str, owner: str) -> Finding:
-        """Stamp who produced this. The pipeline owns the field; detectors do not.
+        """Stamp who produced this. The pipeline owns the field. Detectors do not.
 
         Goes through ``model_copy`` with a real ``DetectorRef`` rather than plain
         attribute assignment, which would leave a raw dict in a typed field and
@@ -242,7 +236,7 @@ class Finding(BaseModel):
     @classmethod
     def _one_line(cls, v: str) -> str:
         if "\n" in v or "\r" in v:
-            raise ValueError("reason is one line; put detail in metadata or limitations")
+            raise ValueError("reason is one line. Put detail in metadata or limitations")
         return v
 
     @field_validator("evidence")
@@ -284,7 +278,7 @@ class Finding(BaseModel):
             raise ValueError(
                 "a finding tagged "
                 f"{sorted(LINK_HINT_REQUIRED_TAGS.intersection(self.tags))} "
-                "must carry link_hints; the linker needs geometry, not a verdict"
+                "must carry link_hints. The linker needs geometry, not a verdict"
             )
 
         if self.link_hints and self.link_hints.source_id and self.asset != "data":
@@ -311,8 +305,7 @@ def final_schema() -> dict[str, Any]:
     s["$id"] = "https://cvassure.local/contracts/finding.schema.json"
     s["title"] = "CVAssure Finding"
     s["description"] = (
-        "One assurance flag. Detector-proposed fields are filled by the pipeline. "
-        "See contracts/FINDING.md."
+        "One assurance flag. Detector-proposed fields are filled by the pipeline."
     )
     s["properties"]["id"] = {"type": "string", "pattern": ID_PATTERN}
     s["required"] = list(REQUIRED_FIELDS)

@@ -1,11 +1,8 @@
-"""Thin COCO / YOLO readers. Enough for the day-2 pipeline, nothing more.
+"""COCO JSON and YOLO txt readers.
 
-Person 2 owns the full adapters and may replace this file wholesale. This exists
-so stage 1 does something real on day 2 while P2 is still writing the proper one.
-
-The internal sample table is the contract: `sample_id`, `path`, `class_id`,
-`source_id`, `batch_id`. Contributor and batch come from extra annotation fields
-or a sidecar JSON, **never** from the ground-truth attack manifest.
+They build the internal sample table: `sample_id`, `path`, `class_id`,
+`source_id`, `batch_id`. Contributor and batch come from annotation fields or a
+sidecar JSON. They do not come from a ground-truth attack manifest.
 """
 
 from __future__ import annotations
@@ -143,7 +140,7 @@ ADAPTERS = {"coco": read_coco, "yolo": read_yolo}
 def load_dataset(path: Path, sidecar: dict[str, Any] | None = None) -> Dataset:
     """Pick an adapter by content, not by file extension.
 
-    A directory with `labels/` is YOLO; a directory with a COCO json is COCO.
+    A directory with `labels/` is YOLO. A directory with a COCO json is COCO.
     The plan requires ingesting both without a format flag.
     """
     if not path.is_dir():

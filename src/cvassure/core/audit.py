@@ -1,12 +1,10 @@
-"""Hash-chained audit log (D9).
+"""Hash-chained audit log.
 
-JSON Lines. Each entry carries `prev_hash` and `entry_hash`, fsync'd on append.
-Editing, deleting, reordering or truncating any line breaks the chain, and
-`verify` says so.
+JSON Lines. Each entry carries `prev_hash` and `entry_hash`. The writer fsyncs
+each append. Editing, deleting, reordering, or truncating a line breaks `verify`.
 
-Person 1 ships `LocalSha256Chain` and **no signatures**, on purpose. Person 4 owns
-Ed25519 and Merkle; when their `P4Chain` exists it drops in behind the same three
-methods and nothing else in the pipeline changes. Person 1 never mints a key.
+`LocalSha256Chain` does not sign entries. If `cvassure.provenance.chain.SignedChain`
+imports, `make_chain` uses it. This package does not mint keys.
 
 Private keys are never logged. Public-key fingerprints only.
 """
@@ -47,24 +45,20 @@ def entry_hash(entry: Mapping[str, Any]) -> str:
     return sha256_hex(canonical_json(body))
 
 
-class P4Chain:
-    """Adapter over Person 4's signed chain. Same three methods, nothing else.
+class SignedChain:
+    """Adapter over `cvassure.provenance.chain.SignedChain`.
 
-    Person 1 ships `LocalSha256Chain` so nothing waits, and this is the swap point.
-    Person 4 owns Ed25519 and Merkle; this class does **not** re-implement either,
-    it delegates. That keeps the plan's rule ("swap to P4's chain when that module
-    exists") one import away instead of a rewrite of the pipeline.
+    Same three methods as `LocalSha256Chain`. This class does not implement
+    Ed25519 or a Merkle tree. It delegates.
 
-    It deliberately does not fall back to the local chain when P4's module is
-    missing: a silent fallback would drop signature verification without anyone
-    noticing, and the whole point of the records row is that a chain either
-    verifies or it does not.
+    If that module is missing, `make_chain` does not construct this class. A
+    silent fallback after a signature is present would drop verification.
     """
 
     def __init__(self, path: Path, *, deterministic_ts: str | None = None, fresh: bool = True):
-        from cvassure.shift import p4chain  # P4's module, imported lazily
+        from cvassure.provenance import chain as signed
 
-        self._impl = p4chain.P4Chain(path, deterministic_ts=deterministic_ts, fresh=fresh)
+        self._impl = signed.SignedChain(path, deterministic_ts=deterministic_ts, fresh=fresh)
         self.path = path
 
     def append(self, event: str, data: Mapping[str, Any]) -> Mapping[str, Any]:
@@ -80,23 +74,21 @@ class P4Chain:
 def make_chain(
     path: Path, *, deterministic_ts: str | None = None, fresh: bool = True
 ) -> ChainBackend:
-    """P4's chain when it is importable, otherwise the local hash chain.
+    """Signed chain when it imports, otherwise the local hash chain.
 
-    The one place the swap happens. Keeping the decision here rather than in the
-    pipeline means the day-4 wire-up is a one-line check that already exists,
-    and `chain_backend` in the run manifest records which one actually ran.
+    `chain_backend` in the run manifest records which implementation ran.
     """
     import importlib
 
     try:
-        importlib.import_module("cvassure.shift.p4chain")
+        importlib.import_module("cvassure.provenance.chain")
     except Exception:
         return LocalSha256Chain(path, deterministic_ts=deterministic_ts, fresh=fresh)
-    return P4Chain(path, deterministic_ts=deterministic_ts, fresh=fresh)
+    return SignedChain(path, deterministic_ts=deterministic_ts, fresh=fresh)
 
 
 class ChainBackend(Protocol):
-    """The three methods Person 4's chain also has. That is the whole adapter."""
+    """The three methods a signed chain also implements."""
 
     def append(self, event: str, data: Mapping[str, Any]) -> Mapping[str, Any]: ...
     def verify(self) -> bool: ...
@@ -109,9 +101,8 @@ class LocalSha256Chain:
     A hash chain proves the log has not been edited since it was written, given
     the head hash was recorded somewhere else. Without signatures, an attacker who
     controls the whole file can rewrite it and recompute every hash. That is the
-    honest limitation, it goes in the coverage statement, and Person 4's signature
-    is what closes it. `chained_not_signed: true` is in every entry for exactly
-    this reason.
+    honest limitation, and the coverage statement says so. A signature closes it.
+    `chained_not_signed: true` is in every entry for this reason.
     """
 
     def __init__(
@@ -121,7 +112,7 @@ class LocalSha256Chain:
 
         Appending to yesterday's log would make `verify-log` verify two runs as
         one chain, and the head in run_manifest.json would belong to neither.
-        A run owns its log; the previous one is still on disk, untouched, and a
+        A run owns its log. The previous one is still on disk, untouched, and a
         judge can diff them.
         """
         self.path = path
@@ -147,8 +138,7 @@ class LocalSha256Chain:
     def _now(self) -> str:
         if self.deterministic_ts is not None:
             return self.deterministic_ts
-        # ponytail: second resolution from the OS clock. If two runs in the same
-        # second must differ, use a monotonic counter in `seq` instead of a clock.
+        # Second resolution from the OS clock. `seq` already orders entries.
         return (
             __import__("datetime")
             .datetime.now(__import__("datetime").timezone.utc)
@@ -229,11 +219,10 @@ def verify_file(path: Path, *, expected_head: str | None = None) -> VerifyResult
             if entry.get("entry_hash") != entry_hash(entry):
                 return VerifyResult(False, f"line {lineno} body was edited", n, prev)
             if "sig" in entry and entry["sig"] is not None:
-                # Person 4's chain. We do not verify signatures here; we do not
-                # silently ignore them either.
+                # A signature is not checked here, and it is not ignored.
                 return VerifyResult(
                     False,
-                    "entry carries a signature: use P4Chain to verify, not LocalSha256Chain",
+                    "entry carries a signature: use SignedChain to verify, not LocalSha256Chain",
                     n,
                     prev,
                 )

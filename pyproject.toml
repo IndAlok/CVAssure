@@ -44,7 +44,6 @@ select = ["E", "F", "I", "UP", "B", "C4", "SIM"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["E501"]
-"scripts/make_images.py" = ["E501"]
 # B008: `typer.Option(...)` in an argument default is typer's required idiom, not
 # a mutable-default bug. Rewriting it to satisfy the rule would break the CLI.
 "src/cvassure/core/cli.py" = ["B008"]

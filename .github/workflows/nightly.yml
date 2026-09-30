@@ -31,9 +31,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -e ".[dev]"
 
-      # While any day-2 stub still runs, `--strict` exits 5 by design, so the
-      # nightly runs the stub path and only has to stay green. Drop this step's
-      # `if` and add --strict once the real detectors land.
+      # Built-in stubs make `--strict` exit 5. This job runs without `--strict`.
       - name: Regenerate seed 42 and audit it
         run: python scripts/nightly_demo.py --out out
 

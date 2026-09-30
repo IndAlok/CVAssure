@@ -10,7 +10,7 @@
   "limitations": "Spectral split is heuristic. A sensor fault could look the same.",
   "disposition": "quarantine",
   "linked_findings": [],
-  "detector": { "id": "shift.manipulation", "version": "0.1.0", "owner": "P5" },
+  "detector": { "id": "shift.manipulation", "version": "0.1.0", "owner": "shift" },
   "batch_id": "B-3",
   "sample_count": 40,
   "tags": ["manipulation"],

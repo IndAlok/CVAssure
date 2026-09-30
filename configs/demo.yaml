@@ -1,6 +1,6 @@
 version: 1
 name: cvassure-demo
-# Day-2 stub configuration. Real detector modules land as teammates merge.
+# Built-in stub configuration. A real detector module with the same id replaces a stub.
 
 seed: 42
 access: white-box

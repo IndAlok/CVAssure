@@ -2,21 +2,21 @@
   "$defs": {
     "DetectorRef": {
       "additionalProperties": false,
-      "description": "Who produced this. The pipeline fills it; detectors do not.",
+      "description": "Who produced this. The pipeline fills it. Detectors do not.",
       "properties": {
         "id": {
           "minLength": 1,
           "title": "Id",
           "type": "string"
         },
-        "owner": {
-          "minLength": 1,
-          "title": "Owner",
-          "type": "string"
-        },
         "version": {
           "minLength": 1,
           "title": "Version",
+          "type": "string"
+        },
+        "owner": {
+          "minLength": 1,
+          "title": "Owner",
           "type": "string"
         }
       },
@@ -36,6 +36,12 @@
           "title": "Escalated",
           "type": "boolean"
         },
+        "severity_before": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Severity Before",
+          "type": "number"
+        },
         "linked_to": {
           "items": {
             "type": "string"
@@ -47,12 +53,6 @@
           "minLength": 1,
           "title": "Method",
           "type": "string"
-        },
-        "severity_before": {
-          "maximum": 1.0,
-          "minimum": 0.0,
-          "title": "Severity Before",
-          "type": "number"
         }
       },
       "required": [
@@ -65,8 +65,39 @@
     },
     "LinkHints": {
       "additionalProperties": false,
-      "description": "Evidence the cross-asset linker reads. Never a verdict.\n\nP2 emits this on data findings tagged ``patch_trigger`` or ``blend_trigger``.\nP3 emits it on model findings tagged ``trigger_sweep_hit`` or\n``trigger_reconstructed``.",
+      "description": "Evidence the cross-asset linker reads. Not a verdict.\n\nData findings tagged `patch_trigger` or `blend_trigger` carry this.\nModel findings tagged `trigger_sweep_hit` or `trigger_reconstructed` carry it.",
       "properties": {
+        "target_class": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Target Class"
+        },
+        "source_id": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Id"
+        },
+        "trigger": {
+          "$ref": "#/$defs/TriggerHint"
+        },
         "location_bbox": {
           "anyOf": [
             {
@@ -93,37 +124,6 @@
           ],
           "default": null,
           "title": "Patch Template Path"
-        },
-        "source_id": {
-          "anyOf": [
-            {
-              "minLength": 1,
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Source Id"
-        },
-        "target_class": {
-          "anyOf": [
-            {
-              "type": "integer"
-            },
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Target Class"
-        },
-        "trigger": {
-          "$ref": "#/$defs/TriggerHint"
         }
       },
       "required": [
@@ -136,15 +136,15 @@
       "additionalProperties": false,
       "description": "Which rule decided the disposition. Written by the policy engine only.",
       "properties": {
+        "rule_id": {
+          "minLength": 1,
+          "title": "Rule Id",
+          "type": "string"
+        },
         "policy_hash": {
           "minLength": 1,
           "pattern": "^[0-9a-f]{64}$",
           "title": "Policy Hash",
-          "type": "string"
-        },
-        "rule_id": {
-          "minLength": 1,
-          "title": "Rule Id",
           "type": "string"
         }
       },
@@ -167,18 +167,6 @@
           "title": "Kind",
           "type": "string"
         },
-        "mask_path": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Mask Path"
-        },
         "patch_id": {
           "anyOf": [
             {
@@ -191,6 +179,18 @@
           ],
           "default": null,
           "title": "Patch Id"
+        },
+        "mask_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mask Path"
         },
         "pattern_path": {
           "anyOf": [
@@ -212,20 +212,18 @@
       "type": "object"
     }
   },
-  "$id": "https://cvassure.local/contracts/finding.schema.json",
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
-  "description": "One assurance flag. Detector-proposed fields are filled by the pipeline. See contracts/FINDING.md.",
+  "description": "One assurance flag. Detector-proposed fields are filled by the pipeline.",
   "properties": {
-    "access_level": {
-      "enum": [
-        "white-box",
-        "gray-box",
-        "black-box",
-        "not-applicable"
-      ],
-      "title": "Access Level",
+    "schema_version": {
+      "const": "1.0",
+      "default": "1.0",
+      "title": "Schema Version",
       "type": "string"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^F-\\d{3,}$"
     },
     "asset": {
       "enum": [
@@ -237,6 +235,88 @@
       ],
       "title": "Asset",
       "type": "string"
+    },
+    "reason": {
+      "maxLength": 300,
+      "minLength": 10,
+      "title": "Reason",
+      "type": "string"
+    },
+    "evidence": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Evidence",
+      "type": "array"
+    },
+    "severity": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Severity",
+      "type": "number"
+    },
+    "confidence": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Confidence",
+      "type": "number"
+    },
+    "access_level": {
+      "enum": [
+        "white-box",
+        "gray-box",
+        "black-box",
+        "not-applicable"
+      ],
+      "title": "Access Level",
+      "type": "string"
+    },
+    "limitations": {
+      "minLength": 10,
+      "title": "Limitations",
+      "type": "string"
+    },
+    "disposition": {
+      "enum": [
+        "accept",
+        "review",
+        "quarantine",
+        "rejected"
+      ],
+      "title": "Disposition",
+      "type": "string"
+    },
+    "linked_findings": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 50,
+      "title": "Linked Findings",
+      "type": "array"
+    },
+    "detector": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/DetectorRef"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "source_id": {
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Source Id"
     },
     "batch_id": {
       "anyOf": [
@@ -266,100 +346,13 @@
       "default": null,
       "title": "Class Label"
     },
-    "confidence": {
-      "maximum": 1.0,
-      "minimum": 0.0,
-      "title": "Confidence",
-      "type": "number"
-    },
-    "detector": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/DetectorRef"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "default": null
-    },
-    "disposition": {
-      "enum": [
-        "accept",
-        "review",
-        "quarantine",
-        "rejected"
-      ],
-      "title": "Disposition",
-      "type": "string"
-    },
-    "escalation": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/Escalation"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "default": null
-    },
-    "evidence": {
-      "items": {
-        "type": "string"
-      },
-      "title": "Evidence",
-      "type": "array"
-    },
-    "id": {
-      "pattern": "^F-\\d{3,}$",
-      "type": "string"
-    },
-    "limitations": {
-      "minLength": 10,
-      "title": "Limitations",
-      "type": "string"
-    },
-    "link_hints": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/LinkHints"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "default": null
-    },
-    "linked_findings": {
+    "sample_ids": {
       "items": {
         "type": "string"
       },
       "maxItems": 50,
-      "title": "Linked Findings",
+      "title": "Sample Ids",
       "type": "array"
-    },
-    "metadata": {
-      "additionalProperties": true,
-      "title": "Metadata",
-      "type": "object"
-    },
-    "policy": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/PolicyRef"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "default": null
-    },
-    "reason": {
-      "maxLength": 300,
-      "minLength": 10,
-      "title": "Reason",
-      "type": "string"
     },
     "sample_count": {
       "anyOf": [
@@ -373,44 +366,6 @@
       ],
       "default": null,
       "title": "Sample Count"
-    },
-    "sample_ids": {
-      "items": {
-        "type": "string"
-      },
-      "maxItems": 50,
-      "title": "Sample Ids",
-      "type": "array"
-    },
-    "schema_version": {
-      "const": "1.0",
-      "default": "1.0",
-      "title": "Schema Version",
-      "type": "string"
-    },
-    "severity": {
-      "maximum": 1.0,
-      "minimum": 0.0,
-      "title": "Severity",
-      "type": "number"
-    },
-    "source_id": {
-      "anyOf": [
-        {
-          "minLength": 1,
-          "type": "string"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "default": null,
-      "title": "Source Id"
-    },
-    "stub": {
-      "default": false,
-      "title": "Stub",
-      "type": "boolean"
     },
     "tags": {
       "items": {
@@ -436,6 +391,49 @@
       },
       "title": "Tags",
       "type": "array"
+    },
+    "link_hints": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/LinkHints"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "escalation": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Escalation"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "policy": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PolicyRef"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "stub": {
+      "default": false,
+      "title": "Stub",
+      "type": "boolean"
+    },
+    "metadata": {
+      "additionalProperties": true,
+      "title": "Metadata",
+      "type": "object"
     }
   },
   "required": [
@@ -452,5 +450,7 @@
     "linked_findings"
   ],
   "title": "CVAssure Finding",
-  "type": "object"
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cvassure.local/contracts/finding.schema.json"
 }

@@ -1,13 +1,11 @@
-"""Coverage statement (D11). Status is derived, never hand-written.
+"""Coverage statement. Status is derived, never hand-written.
 
-Reads Person 5's `results_table.csv` and turns it into a coverage statement by
-the rules in `configs/coverage_rules.yaml`. No row means `Untested`, never
-`Supported`. Three classes are `Unsupported` by declaration and a measured row
-never flips one of them.
+Reads `results_table.csv` and applies `configs/coverage_rules.yaml`. No row means
+`Untested`, never `Supported`. Three classes are `Unsupported` by declaration.
+A measured row does not flip one of those three.
 
-A missing CSV is a legitimate state, not an error: every non-declared row becomes
-`Untested` and the CLI prints a one-line warning. Shipping an honest "we have not
-measured this yet" is better than a placeholder percentage.
+A missing CSV is not an error. Every other row becomes `Untested`, and the CLI
+prints a one-line warning.
 """
 
 from __future__ import annotations
@@ -101,8 +99,8 @@ class Coverage:
         ]
         for r in self.rows:
             out.append(
-                f"| {r.attack_class} | {r.status} | {r.measured or '—'} | "
-                f"{', '.join(r.access_levels) or '—'} | {r.n_seeds or '—'} |"
+                f"| {r.attack_class} | {r.status} | {r.measured or ', '} | "
+                f"{', '.join(r.access_levels) or ', '} | {r.n_seeds or ', '} |"
             )
         if self.warning:
             out += ["", f"> {self.warning}"]
@@ -138,8 +136,8 @@ class Coverage:
             rows.append(
                 f"<tr><td style='{td}'>{r.attack_class}</td>"
                 f"<td style='{td};{style}'><b>{r.status}</b></td>"
-                f"<td style='{td}'>{r.measured or '—'}</td>"
-                f"<td style='{td}'>{r.n_seeds or '—'}</td></tr>"
+                f"<td style='{td}'>{r.measured or ', '}</td>"
+                f"<td style='{td}'>{r.n_seeds or ', '}</td></tr>"
             )
         return (
             f"<table style='{css}'><thead><tr>"
@@ -164,12 +162,12 @@ def _num(v: str | None) -> float | None:
 def load_results(path: Path | None) -> tuple[list[dict[str, str]], str | None]:
     """Read the CSV. Missing file is fine and returns a warning, not an exception."""
     if path is None or not path.is_file():
-        return [], f"no results table at {path or 'None'}; every non-declared class is Untested"
+        return [], f"no results table at {path or 'None'}. Every non-declared class is Untested"
     text = path.read_text(encoding="utf-8")
     reader = csv.DictReader(io.StringIO(text))
     missing = [c for c in REQUIRED_COLUMNS if c not in (reader.fieldnames or [])]
     if missing:
-        return [], f"{path} is missing columns {missing}; treating all classes as Untested"
+        return [], f"{path} is missing columns {missing}. Treating all classes as Untested"
     return list(reader), None
 
 
@@ -275,8 +273,8 @@ def build_coverage(
                 status=STATUS_PARTIAL,
                 reason="stubs ran in this run",
                 limitations=[
-                    f"{len(stub_findings)} finding(s) came from day-2 stubs "
-                    f"({', '.join(names)}); no real measurement exists for those rows."
+                    f"{len(stub_findings)} finding(s) came from built-in stubs "
+                    f"({', '.join(names)}). No real measurement exists for those rows."
                 ],
             )
         )

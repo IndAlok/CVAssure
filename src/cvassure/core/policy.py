@@ -1,13 +1,11 @@
-"""Declarative policy engine (D8). `when` / `then`, eight operators, no code.
+"""Declarative policy engine. `when` and `then`, eight operators, no code.
 
-The policy file decides every `disposition`. Detectors propose; policy disposes.
+The policy file decides every `disposition`. Detectors propose. Policy decides.
 An emitted finding that matches no rule gets the declared default, which is
-`review` — a high-severity flag can never fall through to a silent `accept`.
+`review`. A high-severity flag does not fall through to `accept`.
 
-No `eval`, no `exec`, no `simpleeval`. An unknown field or an unknown operator is
-a config error and exit 2, not a skipped rule. A rule that silently does not
-apply is the most dangerous kind of broken policy, because the report looks
-complete.
+There is no `eval`, no `exec`, and no `simpleeval`. An unknown field or operator
+is a config error and exit 2.
 """
 
 from __future__ import annotations
@@ -158,7 +156,7 @@ def _field_value(name: str, f: Finding, linked: Sequence[Finding]) -> Any:
 
 
 def _linked_test(spec: Mapping[str, Any], linked: Sequence[Finding]) -> bool:
-    """`linked: {any: {disposition: quarantine}}` — does any linked finding match?"""
+    """`linked: {any: {disposition: quarantine}}` ,  does any linked finding match?"""
     if "any" not in spec:
         raise PolicyError("linked supports only `any`")
     inner = spec["any"]
@@ -175,7 +173,7 @@ def _when_block(when: Mapping[str, Any], f: Finding, linked: Sequence[Finding]) 
             continue
         if name not in FINDING_FIELDS:
             raise PolicyError(
-                f"unknown field {name!r}; policy may test only "
+                f"unknown field {name!r}. Policy may test only "
                 f"{sorted(FINDING_FIELDS)} plus `linked`"
             )
         value = _field_value(name, f, linked)
@@ -183,7 +181,7 @@ def _when_block(when: Mapping[str, Any], f: Finding, linked: Sequence[Finding]) 
             for op, operand in test.items():
                 if op not in OPERATORS:
                     raise PolicyError(
-                        f"unknown operator {op!r} on field {name!r}; allowed: {sorted(OPERATORS)}"
+                        f"unknown operator {op!r} on field {name!r}. Allowed: {sorted(OPERATORS)}"
                     )
                 try:
                     ok = OPERATORS[op](value, operand)
@@ -260,7 +258,7 @@ def load_policy(path: Path) -> Policy:
         # rule for must never read as a clean bill of health.
         raise PolicyError(
             "defaults.disposition may not be 'accept'. An emitted finding with no "
-            "matching rule defaults to 'review'; 'accept' is only reachable by a rule."
+            "matching rule defaults to 'review'. 'accept' is only reachable by a rule."
         )
 
     rules = _validate_rules(doc.get("rules", []))
@@ -284,7 +282,7 @@ def load_policy(path: Path) -> Policy:
 def _probe_finding() -> Finding:
     """A minimal valid Finding used only to type-check `when` blocks at load.
 
-    Values are placeholders; the point is that it is a real Finding, so a rule
+    Values are placeholders. The point is that it is a real Finding, so a rule
     referencing a field that does not exist fails here rather than mid-run.
     """
     return Finding.draft(
@@ -364,7 +362,7 @@ def _schema_path() -> Path | None:
 def _validate_against_schema(doc: Mapping[str, Any], path: Path) -> None:
     schema_path = _schema_path()
     if schema_path is None:
-        raise PolicyError("contracts/policy.schema.json is missing; refuse to load a policy")
+        raise PolicyError("contracts/policy.schema.json is missing. Refusing to load a policy")
     import json
 
     from jsonschema import Draft202012Validator

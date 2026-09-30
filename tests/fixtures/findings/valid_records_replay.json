@@ -10,7 +10,7 @@
   "limitations": "Detects replay within the logged window only. Outside it, replay is invisible.",
   "disposition": "rejected",
   "linked_findings": [],
-  "detector": { "id": "records.verify", "version": "0.1.0", "owner": "P4" },
+  "detector": { "id": "records.verify", "version": "0.1.0", "owner": "records" },
   "sample_ids": ["rec-0012"],
   "sample_count": 1,
   "tags": ["replay", "verification_failed"],

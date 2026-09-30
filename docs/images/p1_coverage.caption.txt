@@ -1,1 +1,0 @@
-Coverage is derived from measured numbers; the grey rows are things CVAssure does not claim to detect.

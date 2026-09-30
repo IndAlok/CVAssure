@@ -1,31 +1,13 @@
-"""Day-2 stubs (D6). One per owner package, deleted as real detectors land.
+"""Built-in detector stubs.
 
-Each stub registers under **the same id the real detector will use**, so when a
-teammate's PR lands, the registry prefers the real module and this file becomes
-dead weight. That is the intended transition and it needs no edit in core.
+Each stub uses the id a real detector will use. The registry prefers a real
+module with the same id.
 
-Loud by design, per the plan:
+A stub sets `stub` true, starts `reason` with `[STUB]`, and makes
+`cvassure audit --strict` exit 5.
 
-* `stub: true`
-* `reason` starts with `[STUB]`
-* the CLI shows a STUB badge
-* `cvassure audit --strict` exits 5
-
-The narrative values below (source id, class, patch id) are **fixture values**
-that make the day-2 pipeline shape correct end to end. They are not results, they
-are not in policy or core logic, and they disappear when the real detectors land.
-
-Which stubs emit findings and which skip follows the plan Section 20 narrative
-list, not convenience:
-
-* data: one high-severity patch finding (`C-07`, class 0, patch `P-03`)
-* model: one trigger finding, same patch, white-box
-* records: 2 rejected (1 edited, 1 replayed)
-* shift: one drift finding and one manipulation finding on two batches
-
-The data near-duplicate stub has no narrative line in Section 20, so it reports
-itself as skipped rather than inventing a second data finding. Batch ids are read
-from the loaded dataset, never hard-coded.
+The source id, class, and patch id below are fixture values. They are not
+measurements, and they are not read by policy or the linker as constants.
 """
 
 from __future__ import annotations
@@ -38,16 +20,14 @@ from cvassure.core.imaging import BLUE, GREEN, NAVY, RED, checkerboard, solid
 
 STUB_REASON_PREFIX = "[STUB]"
 
-# Fixture story, day 2 only. These three values are the shape the linker and the
-# report are built against; P2 and P3 replace them with measurements. They live
-# here, in a stub, and nowhere in policy, the linker or core logic.
+# Fixture values for the built-in stubs. Policy and the linker do not import these.
 DEMO_SOURCE = "C-07"
 DEMO_CLASS = 0
 DEMO_PATCH_ID = "P-03"
 
 
 class _StubBase(Detector):
-    """Shared stub plumbing. Not a detector itself; never registered."""
+    """Shared stub plumbing. Not a detector itself. Never registered."""
 
     def _evidence(self, ctx: AuditContext, name: str, color: tuple[int, int, int]) -> str:
         rel = f"evidence/{name}.png"
@@ -82,7 +62,7 @@ class _StubBase(Detector):
 class PatchTriggerStub(_StubBase):
     id: ClassVar[str] = "data.patch_trigger"
     asset: ClassVar[str] = "data"
-    owner: ClassVar[str] = "P2"
+    owner: ClassVar[str] = "data"
     version: ClassVar[str] = "0.1.0-stub"
     requires: ClassVar[frozenset[str]] = frozenset()
 
@@ -104,7 +84,7 @@ class PatchTriggerStub(_StubBase):
                 confidence=0.6,
                 access_level="not-applicable",
                 limitations=(
-                    "STUB: P2's detector has not landed, so this number is a fixture "
+                    "STUB: built-in fixture. This number is not a measurement. "
                     "value chosen to exercise the pipeline, not a detection result."
                 ),
                 disposition="review",
@@ -134,20 +114,23 @@ class PatchTriggerStub(_StubBase):
 class NearDuplicateStub(_StubBase):
     id: ClassVar[str] = "data.near_duplicate"
     asset: ClassVar[str] = "data"
-    owner: ClassVar[str] = "P2"
+    owner: ClassVar[str] = "data"
     version: ClassVar[str] = "0.1.0-stub"
     requires: ClassVar[frozenset[str]] = frozenset()
 
     def run(self, ctx: AuditContext) -> DetectorResult:
-        res = DetectorResult(status="skipped", skipped_reason="STUB: P2 detector not landed")
-        res.summary = "skipped (STUB not landed)"
+        res = DetectorResult(
+            status="skipped",
+            skipped_reason="STUB: built-in near-duplicate check is not a measurement",
+        )
+        res.summary = "skipped (built-in stub)"
         return res
 
 
 class TriggerSweepStub(_StubBase):
     id: ClassVar[str] = "model.trigger_sweep"
     asset: ClassVar[str] = "model"
-    owner: ClassVar[str] = "P3"
+    owner: ClassVar[str] = "model"
     version: ClassVar[str] = "0.1.0-stub"
     requires: ClassVar[frozenset[str]] = frozenset({"weights"})
 
@@ -173,7 +156,7 @@ class TriggerSweepStub(_StubBase):
                 confidence=0.6,
                 access_level=tier if tier != "not-applicable" else "white-box",
                 limitations=(
-                    "STUB: P3's sweep has not landed. This is a fixture score, and no "
+                    "STUB: built-in fixture score. No "
                     "mask reconstruction was performed."
                 ),
                 disposition="review",
@@ -201,7 +184,7 @@ class TriggerSweepStub(_StubBase):
 class RecordVerifyStub(_StubBase):
     id: ClassVar[str] = "records.verify"
     asset: ClassVar[str] = "records"
-    owner: ClassVar[str] = "P4"
+    owner: ClassVar[str] = "records"
     version: ClassVar[str] = "0.1.0-stub"
     requires: ClassVar[frozenset[str]] = frozenset()
 
@@ -225,7 +208,7 @@ class RecordVerifyStub(_StubBase):
                     confidence=0.5,
                     access_level="not-applicable",
                     limitations=(
-                        "STUB: P4's chain has not landed, so nothing was actually "
+                        "STUB: built-in record check. Nothing was actually "
                         "verified. These records are presumed-bad fixture rows."
                     ),
                     disposition="review",
@@ -242,7 +225,7 @@ class RecordVerifyStub(_StubBase):
 
 
 def _count_records(path: Any) -> int:
-    """Read the record count from JSONL. Counts only; the stub verifies nothing."""
+    """Read the record count from JSONL. Counts only. The stub verifies nothing."""
     total = 0
     try:
         for line in path.read_text(encoding="utf-8").splitlines():
@@ -254,17 +237,11 @@ def _count_records(path: Any) -> int:
 
 
 class NaturalShiftStub(_StubBase):
-    """Probable operational drift on one batch.
-
-    Section 20's narrative wants one drift finding and one manipulation finding
-    so PS §2.2.4's distinction is visible in the demo. A stub that skipped here
-    would leave stage 5 empty. Batch ids come from the data; the verdict and the
-    fixture label are the only things this invents, and it says so twice.
-    """
+    """Probable operational drift on one batch. Batch ids come from the data."""
 
     id: ClassVar[str] = "shift.natural"
     asset: ClassVar[str] = "shift"
-    owner: ClassVar[str] = "P5"
+    owner: ClassVar[str] = "shift"
     version: ClassVar[str] = "0.1.0-stub"
     requires: ClassVar[frozenset[str]] = frozenset()
 
@@ -284,7 +261,7 @@ class NaturalShiftStub(_StubBase):
                 confidence=0.5,
                 access_level="not-applicable",
                 limitations=(
-                    "STUB: P5's shift detectors have not landed. No MMD, KS or PSI was "
+                    "STUB: built-in shift check. No MMD, KS or PSI was "
                     "computed and no reference distribution was compared."
                 ),
                 disposition="review",
@@ -306,7 +283,7 @@ class ManipulationStub(_StubBase):
 
     id: ClassVar[str] = "shift.manipulation"
     asset: ClassVar[str] = "shift"
-    owner: ClassVar[str] = "P5"
+    owner: ClassVar[str] = "shift"
     version: ClassVar[str] = "0.1.0-stub"
     requires: ClassVar[frozenset[str]] = frozenset()
 
@@ -315,7 +292,7 @@ class ManipulationStub(_StubBase):
         batches = self._batches(ctx)
         if len(batches) < 2:
             res.status = "skipped"
-            res.skipped_reason = "fewer than two batches; nothing to contrast against drift"
+            res.skipped_reason = "fewer than two batches. Nothing to contrast against drift"
             return res
         batch = batches[1]
         res.findings.append(
@@ -330,7 +307,7 @@ class ManipulationStub(_StubBase):
                 confidence=0.5,
                 access_level="not-applicable",
                 limitations=(
-                    "STUB: P5's shift detectors have not landed. Drift and manipulation "
+                    "STUB: built-in shift check. Drift and manipulation "
                     "are not actually distinguished by any computed statistic here."
                 ),
                 disposition="review",

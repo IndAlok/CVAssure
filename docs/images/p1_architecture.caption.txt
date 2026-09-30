@@ -1,1 +1,0 @@
-Three assets in, one uniform Finding object out, and the cross-asset link joining the data and model stories.

@@ -1,8 +1,6 @@
-"""Typed exits. The CLI returns one of these and nothing else.
+"""Exit codes for the CLI.
 
-Every number here is in the plan's §7.4 table. A stage or detector failure must
-be distinguishable from a policy failure, because "it did not work" and "it said
-no" are different answers to a judge.
+A detector failure, a verification failure, and a policy hit use different codes.
 """
 
 from __future__ import annotations
@@ -44,8 +42,8 @@ class FailOnTripped(CvassureError):
 
 
 class BlockedOn(CvassureError):
-    """A teammate artefact is missing. Printed as BLOCKED-ON: P<n>, exit 2."""
+    """A required component is missing. Exit 2."""
 
     def __init__(self, who: str, what: str) -> None:
         self.who = who
-        super().__init__(f"BLOCKED-ON: {who} - {what}")
+        super().__init__(what)

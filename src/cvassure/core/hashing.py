@@ -1,12 +1,7 @@
-"""Canonical JSON and hashing. One implementation, shared by everything.
+"""Canonical JSON and hashing.
 
-The audit log, the record chain, the config hash and the report payload hash all
-need "the same bytes from the same object". Four different canonicalisers is four
-opportunities for a hash to disagree, so there is one.
-
-**This is not full RFC 8785.** It is the minimal canonicaliser from the plan:
-UTF-8, object keys sorted, no insignificant whitespace, integers without a fraction.
-See `docs/research/standards.md`. Do not claim RFC 8785 compliance.
+UTF-8, sorted object keys, no insignificant whitespace, and integral floats
+written as integers. This is not RFC 8785.
 """
 
 from __future__ import annotations
@@ -27,10 +22,8 @@ class NotCanonical(ValueError):
 def _normalise(obj: Any, path: str = "$") -> Any:
     """Return a copy with integral floats written as ints. Rejects NaN and Inf.
 
-    The rule from the plan is "numbers that are integers written without a
-    fraction". That is a *normalisation*, not a rejection: a measured runtime of
-    0.0 seconds is a real value and must not fail a run. What must fail is a
-    value with no canonical form at all.
+    Integral floats are written as ints. NaN and Inf are rejected. A measured
+    runtime of 0.0 is a real value and must not fail a run.
     """
     if isinstance(obj, bool) or obj is None or isinstance(obj, (str, int)):
         return obj

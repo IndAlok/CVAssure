@@ -1,17 +1,8 @@
-"""Plugin registry (D5). Entry points, then config modules, then built-in stubs.
+"""Plugin registry. Entry points, then config modules, then built-in stubs.
 
-Three jobs, and they are the reason this file exists:
-
-1. **Prefer the real module over the stub with the same id.** A teammate's PR
-   should replace a stub without anyone editing core. That is why the stub and the
-   real detector register under one id.
-2. **Refuse a plugin that breaks the contract**, loudly, at load. A half-typed
-   class that would crash at stage 3 is worse than a load-time failure.
-3. **Isolate everything.** A plugin that raises on import, or a detector that
-   raises in `run`, becomes a `system` Finding. It never kills the run.
-
-No `pluggy`, no extra dependency. The Detector ABC is a five-attribute contract
-and the loader is fifty lines.
+A real module with the same id replaces the stub. A plugin that breaks the
+contract fails at load. An import error or a crash in `run` becomes a `system`
+Finding and does not stop the run.
 """
 
 from __future__ import annotations
@@ -71,7 +62,7 @@ def _instantiate(module_name: str) -> Detector:
     """Import a module (or a `module:Class` path) and build its one Detector.
 
     Accepts `pkg.mod` and `pkg.mod:ClassName`. A module may define exactly one
-    concrete Detector; more than one is an error rather than a guess, because
+    concrete Detector. More than one is an error rather than a guess, because
     picking the wrong class silently registers a detector nobody reviewed.
     """
     module_name, _, wanted = module_name.partition(":")
@@ -102,7 +93,7 @@ def _instantiate(module_name: str) -> Detector:
     if len(found) > 1:
         names = ", ".join(sorted(c.__name__ for c in found))
         raise DetectorsError(
-            f"{module_name} defines {len(found)} Detector classes ({names}); "
+            f"{module_name} defines {len(found)} Detector classes ({names}). "
             "name one with module:Class"
         )
     return found[0]()
@@ -137,7 +128,7 @@ def load_from_entry_points() -> list[Loaded]:
         problems = interface_errors(target)
         if problems:
             raise DetectorsError(
-                f"entry point {ep.name!r} breaks the contract: {'; '.join(problems)}"
+                f"entry point {ep.name!r} breaks the contract: {'. '.join(problems)}"
             )
         out.append(Loaded(detector=target, module=ep.value))
     return out
@@ -159,7 +150,7 @@ def load_from_modules(module_names: Iterable[str]) -> list[Loaded]:
             continue
         problems = interface_errors(det)
         if problems:
-            raise DetectorsError(f"{name} breaks the contract: {'; '.join(problems)}")
+            raise DetectorsError(f"{name} breaks the contract: {'. '.join(problems)}")
         out.append(Loaded(detector=det, module=name))
     return out
 
@@ -174,7 +165,7 @@ def _broken_stub(module_name: str) -> Detector:
     class BrokenStub(Detector):
         id = "system.plugin_load_failed"
         asset = "system"
-        owner = "P1"
+        owner = "core"
         version = "0"
         requires = frozenset()
 
@@ -212,9 +203,7 @@ def build_registry(
 ) -> list[Loaded]:
     """Entry points, then config modules, then stubs. Real beats stub on id.
 
-    A duplicate id from two *real* modules is a config error. A real module and
-    the built-in stub sharing an id is the intended day-2 to day-6 transition and
-    is not an error.
+    A real module and the built-in stub may share an id. Two real modules may not.
     """
     from cvassure.core.stubs import STUB_MODULES
 

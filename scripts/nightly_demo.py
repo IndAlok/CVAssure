@@ -1,17 +1,13 @@
-"""Nightly demo run (D14). Regenerate seed 42, audit it, assert the demo still works.
-
-Run it by hand exactly as nightly runs it:
+"""Nightly demo. Regenerate seed 42, audit it, and check the demo still works.
 
     python scripts/nightly_demo.py --out out
 
-What it checks, from the plan Section 12 and the Section 1 Done list:
+Checks:
 
 * the audit exits 0
 * the chain verifies
-* a LINK is present, and the poisoned contributor it names is the one the
-  **scenario builder** reports - never a hard-coded `C-07`. Asserting the literal
-  would pass even after the pipeline started keying on the id, which is the exact
-  bug the scenario-agnostic rule exists to prevent.
+* a LINK is present, and the contributor it names comes from the scenario
+  builder, not from a hard-coded id in the pipeline
 * two record rejections
 * both shift verdicts, one of them drift
 
@@ -19,8 +15,7 @@ Once the real detectors land, add `--strict`: it exits 5 while any stub still
 runs, so this script fails on a stub left in place by accident.
 
 Also writes `out/runtime.json`, the median of at least five runs plus the
-hardware, which is what the slide-4 runtime line is generated from (D20). A
-single run is not a runtime claim, so the number is a median or it is absent.
+hardware. A single run is not a runtime claim.
 """
 
 from __future__ import annotations

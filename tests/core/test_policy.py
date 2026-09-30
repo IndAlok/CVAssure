@@ -153,7 +153,7 @@ def test_r5_fires_when_a_linked_neighbour_is_quarantined() -> None:
 
     out, hits = apply_policy([data_f, model_f], policy)
     by_id = {f.id: f for f in out}
-    # R1 quarantines the data side; R5 then reviews the model that links to it.
+    # R1 quarantines the data side. R5 then reviews the model that links to it.
     assert by_id["F-001"].disposition == "quarantine"
     assert by_id["F-001"].policy.rule_id == "R1-quarantine-high-data"
     assert by_id["F-002"].disposition == "review"
@@ -194,7 +194,7 @@ def test_apply_policy_writes_the_ref_and_counts_hits() -> None:
 
 
 def test_policy_overwrites_the_detectors_proposal() -> None:
-    """A detector may propose; policy disposes. Always."""
+    """A detector may propose. Policy decides."""
     policy = load_policy(DEFAULT)
     greedy = _f(asset="records", tags=["verification_failed"], disposition="accept").to_final(
         "F-001"
@@ -278,7 +278,7 @@ def test_malformed_yaml_fails_closed(tmp_path: Path) -> None:
 
 
 def test_no_contributor_id_appears_in_the_default_policy() -> None:
-    """Rule 2 of the plan, enforced rather than requested."""
+    """The default policy does not name a contributor, batch, or class id."""
     text = DEFAULT.read_text(encoding="utf-8")
     for banned in ("C-07", "C-01", "B-1", "B-2", "B-3"):
         assert banned not in text, f"{banned} must not appear in a policy rule"
@@ -297,7 +297,7 @@ def test_contains_operator_on_tags(tmp_path: Path) -> None:
 
 
 def test_link_hints_survive_policy_application() -> None:
-    """Linking runs first; policy must not drop the evidence it needs."""
+    """Linking runs first. Policy must not drop the evidence it needs."""
     hints = LinkHints(
         target_class=0,
         trigger=TriggerHint(kind="patch_library", patch_id="P-03"),

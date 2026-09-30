@@ -1,23 +1,13 @@
-"""SYNTHETIC test data. Generated, not stored. No real images, no real datasets.
+"""Synthetic test data. Generated, not stored. No real images, no real datasets.
 
-Person 5 owns `build_demo_scenario(seed=42)` (`contracts/MANIFEST.md`). Until it
-lands, this stands in so the day-2 pipeline is never the thing that is late.
+The contributor ids here, `C-01` and `C-07`, are fixture values. They live here
+and in test assertions. Policy, the linker, and core logic do not hard-code them.
 
-The contributor ids here (`C-01`, `C-07`) are FIXTURE VALUES in the demo story.
-They live here and in test assertions, never in policy, linker, or core logic.
-The linker and the CLI read them from the data, which is the whole point of the
-scenario-agnostic rule.
+Contents: a small COCO dataset with contributor and batch metadata, a JSON Lines
+record file, and a minimal ONNX graph.
 
-Contents: a small COCO dataset with contributor and batch metadata split into a
-clean contributor and a poisoned one, a JSON Lines record file, and a real
-minimal ONNX graph.
-
-The ONNX file is a genuine single-node ONNX model, not a placeholder. It exists
-so day-2 work is not blocked by Person 3: the pipeline's model stage must run and
-the cross-asset link must fire before P3's wrapper lands. It is **not** a trained
-classifier and carries **no** backdoor. Every detector that reads it is therefore
-labelled a stub, and a real detector must not draw conclusions from it. Person 3
-and Person 5 replace it with a real backdoored model.
+The ONNX file is a real single-node graph. It is not a trained classifier and it
+has no backdoor. Detectors that treat it as a result must mark themselves as stubs.
 """
 
 from __future__ import annotations
@@ -38,7 +28,7 @@ BATCHES = ("B-1", "B-2", "B-3")
 N_PER_CONTRIBUTOR = 4
 RECORD_COUNT = 12
 #: Which contributor's samples carry the frozen patch. `PatchTriggerStub` reads
-#: this; a real detector measures it.
+#: this. A real detector measures it.
 PATCHED_CONTRIBUTOR = POISONED_CONTRIBUTOR
 
 
@@ -57,7 +47,7 @@ def build_dataset(root: Path) -> Path:
                     "id": img_id,
                     "file_name": name,
                     # Contributor metadata as extra annotation fields, which is
-                    # where the day-2 reader looks first.
+                    # Annotation file the COCO reader opens first.
                     "contributor_id": source,
                     "batch_id": batch,
                 }
@@ -97,10 +87,10 @@ def build_dataset(root: Path) -> Path:
 
 
 def build_records(path: Path, count: int = RECORD_COUNT) -> Path:
-    """JSON Lines inference records. Unsigned: P4's chain is not in yet.
+    """JSON Lines inference records. Unsigned.
 
-    The file is well-formed so the record stage has something real to count. It
-    is NOT a valid P4 chain, and the stub says so in its `limitations`.
+    The file is well-formed so the record stage has something to count. It is not
+    a signed chain, and the stub says so in `limitations`.
     """
     path.parent.mkdir(parents=True, exist_ok=True)
     lines = []
@@ -162,23 +152,10 @@ def _onnx_fixture_bytes() -> bytes:
 
 
 def build_model_fixture(path: Path) -> Path:
-    """A real, tiny, valid ONNX graph. Not a placeholder, not a real classifier.
+    """A real, tiny ONNX graph. Identity over a 1x3x32x32 input.
 
-    Why a genuine ONNX file: the model stage, the cross-asset link and the report
-    all need a model to exist, and blocking day-2 work on Person 3's wrapper would
-    make the whole spine untestable. A real ONNX file lets a loader open something
-    real, which is what makes the day-2 run honest instead of theatrical.
-
-    What it is **not**: a trained classifier, a backdoored model, or evidence of
-    anything. It is `Identity` over a 1x3x32x32 input, so it loads, runs, and
-    produces nothing interesting. It carries no trigger, and every finding a
-    detector draws from it is stamped `stub: true` for exactly this reason.
-
-    Person 3 supplies the wrapper, Person 5 supplies the backdoored demo model,
-    and both replace this.
-
-    Also writes `model.onnx.digest.txt` with the sha256, so a test can prove the
-    digest the pipeline recorded is the digest of the bytes on disk.
+    It is not a trained classifier and it has no trigger. A finding drawn from
+    it is a stub. Also writes `model.onnx.digest.txt` with the SHA-256.
     """
     import hashlib
 

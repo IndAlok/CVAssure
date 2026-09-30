@@ -10,7 +10,7 @@
   "limitations": "Detects post-hoc edit. Cannot prove who edited it or why.",
   "disposition": "rejected",
   "linked_findings": [],
-  "detector": { "id": "records.verify", "version": "0.1.0", "owner": "P4" },
+  "detector": { "id": "records.verify", "version": "0.1.0", "owner": "records" },
   "sample_ids": ["rec-0007"],
   "sample_count": 1,
   "tags": ["verification_failed"],

@@ -1,25 +1,23 @@
-"""The pipeline (D7). Stage order, id assignment, schema gate, link, policy, write.
+"""Audit pipeline.
 
-Order matters and is fixed by the plan §7.2:
+Order is fixed:
 
-1. config + policy, hashed
-2. inputs hashed
-3. load data
-4. data detectors
-5. model detectors
-6. records verifier
-7. shift detectors
-8. assign ids (stage, detector, severity desc, stable key)
-9. **validate every finding before linking** - one failure aborts with exit 3
-10. link
-11. policy
-12. write the five files
-13. P4's renderer, else the fallback
-14. hash the report, append report_written + run_end, verify the chain
+1. Load config and policy, and hash both.
+2. Hash inputs.
+3. Load data.
+4. Run data detectors.
+5. Run model detectors.
+6. Verify records.
+7. Run shift detectors.
+8. Assign ids.
+9. Validate every finding before linking. One failure aborts with exit 3.
+10. Link findings.
+11. Apply policy.
+12. Write the output files.
+13. Use an optional renderer, or the built-in HTML report.
+14. Hash the report, append the closing log events, and verify the chain.
 
-Step 9 before step 10 is not a style choice. Link mutates both findings in a
-pair, so validating afterwards means a bad field is already in its neighbour and
-you cannot tell which side broke it.
+Linking edits both findings in a pair, so validation runs first.
 """
 
 from __future__ import annotations
@@ -48,7 +46,7 @@ STAGE_INDEX = {name: i + 1 for i, name in enumerate(STAGES)}
 
 @dataclass
 class StageLine:
-    """One CLI line. The shape is fixed; the numbers come from this run."""
+    """One CLI line. The shape is fixed. The numbers come from this run."""
 
     index: int
     label: str
@@ -129,7 +127,7 @@ def _assign_ids(pairs: Sequence[tuple[Finding, str]]) -> list[Finding]:
 
 #: Excluded from the ``payload_sha256`` preimage. Each is only knowable *after*
 #: the hash exists, so including any of them makes the definition circular.
-#: Excluding a field from its own preimage is standard; excluding the other two
+#: Excluding a field from its own preimage is standard. Excluding the other two
 #: is a choice, and it is the one that lets `verify-report` recompute this from
 #: `out/` at any time without re-running the audit.
 POST_RENDER_FIELDS = ("payload_sha256", "report_file_sha256", "audit_head")
@@ -165,8 +163,8 @@ def _run_detector(
     if loaded.detector.requires:
         if ctx.model is None:
             reason = (
-                f"requires {', '.join(sorted(loaded.detector.requires))}; "
-                "no model wrapper is loaded"
+                f"requires {', '.join(sorted(loaded.detector.requires))}. "
+                "No model wrapper is loaded"
             )
         else:
             available = set(ctx.model.capabilities())
@@ -174,8 +172,8 @@ def _run_detector(
             reason = ""
             if missing:
                 reason = (
-                    f"requires {', '.join(sorted(loaded.detector.requires))}; "
-                    f"model is {ctx.model.declare_access_tier()} and provides {sorted(available)}"
+                    f"requires {', '.join(sorted(loaded.detector.requires))}. "
+                    f"Model is {ctx.model.declare_access_tier()} and provides {sorted(available)}"
                 )
         if reason:
             return (
@@ -219,7 +217,7 @@ def _run_detector(
             reason,
         )
     res.runtime_s = round(time.perf_counter() - started, 3)
-    # The pipeline stamps identity; a detector setting these is a bug.
+    # The pipeline stamps identity. A detector setting these is a bug.
     res.findings = [
         f.with_detector(loaded.id, loaded.detector.version, loaded.detector.owner)
         for f in res.findings
@@ -257,11 +255,10 @@ def _top_source(findings: Sequence[Finding]) -> Finding | None:
 
 
 def _disposition_line(findings: Sequence[Finding]) -> str:
-    """One line, mock-up 1B shape: who is quarantined, what was rejected.
+    """One line naming quarantine, rejection, and review, grouped by asset.
 
-    Grouped per asset, in stage order, so no asset is named twice. A quarantined
-    batch and a quarantined contributor are both "who", but they belong to
-    different assets and each asset gets exactly one token.
+    Each asset is named once. The highest-severity quarantine for that asset
+    is the one printed.
     """
     parts: list[str] = []
     for asset in ("data", "model", "records", "shift"):
@@ -428,7 +425,7 @@ def run_audit(
             detector_errors.append(f"{item.id}: {err}")
         stage_results.setdefault(asset, []).append(res)
         for f in res.findings:
-            # A crash lands in `system`; it is still that detector's stage for ordering.
+            # A crash lands in `system`. It is still that detector's stage for ordering.
             all_findings.append((f, asset))
         chain.append(
             "detector_result",
@@ -579,14 +576,10 @@ def run_audit(
 
 
 def _load_model(path: Path | None, access: str) -> tuple[Any, str | None]:
-    """P3's wrapper if it is importable, plus **why** when it is not.
+    """Load the model wrapper when the file exists.
 
-    Person 1 does not load a model. The wrapper is P3's contract
-    (`contracts/MODEL_WRAPPER.md`) and this is the only call site. The second
-    return value is not decoration: "no model in this run" and "a model file was
-    given but P3's loader is not on this machine" are different facts, and only
-    one of them is a `BLOCKED-ON: P3`. Collapsing them would hide a missing
-    teammate behind a missing input.
+    A missing file and a missing loader are different. The second return value
+    names the loader failure. A missing file returns no error.
     """
     if path is None or not path.is_file():
         return None, None
@@ -596,12 +589,12 @@ def _load_model(path: Path | None, access: str) -> tuple[Any, str | None]:
     try:
         mod = importlib.import_module(name)
     except ModuleNotFoundError:
-        return None, "BLOCKED-ON: P3 - cvassure.model_integrity.wrapper is not importable"
+        return None, "cvassure.model_integrity.wrapper is not importable"
     except Exception as exc:
         return None, f"wrapper import failed: {type(exc).__name__}: {exc}"
     factory = getattr(mod, "load_model", None)
     if not callable(factory):
-        return None, "BLOCKED-ON: P3 - cvassure.model_integrity.wrapper has no load_model()"
+        return None, "cvassure.model_integrity.wrapper has no load_model()"
     try:
         return factory(path, access=access), None
     except Exception as exc:
@@ -611,7 +604,7 @@ def _load_model(path: Path | None, access: str) -> tuple[Any, str | None]:
 def _stage_lines(  # noqa: PLR0913 - one call site, a params object would be a second shape
     findings, stage_results, access, records, model_present, cov, model_load_error=None
 ) -> list[StageLine]:
-    """Stages 2 to 5. Numbers come from this run; nothing is a placeholder."""
+    """Stages 2 to 5. Numbers come from this run. Nothing is a placeholder."""
     out: list[StageLine] = []
 
     data_f = [f for f in findings if f.asset == "data"]
@@ -625,7 +618,7 @@ def _stage_lines(  # noqa: PLR0913 - one call site, a params object would be a s
     res_list = stage_results.get("model", [])
     # A real finding is better than a skip, so a producing detector wins even if a
     # sibling skipped. When nothing produced, prefer the *most informative* skip:
-    # the one that is not merely "no model in this run", so a teammate's missing
+    # the one that is not merely "no model in this run", so a missing
     # loader is not drowned out by a stale sibling skip.
     informative = next(
         (
@@ -662,7 +655,7 @@ def _stage_lines(  # noqa: PLR0913 - one call site, a params object would be a s
                 3,
                 f"Model integrity ({access})",
                 "skipped",
-                f"skipped ({model_load_error or 'model file not loadable; BLOCKED-ON: P3'})",
+                f"skipped ({model_load_error or 'model file not loadable'})",
             )
         )
     else:
@@ -735,7 +728,7 @@ def _build_manifest(
     # A wall-clock reading inside the manifest makes `payload_sha256` differ
     # between two otherwise-identical runs, which breaks the `--reproducible`
     # guarantee on `findings.json` and the payload hash. Under
-    # `--reproducible` every duration is frozen to zero; the real timing is
+    # Under `--reproducible` every duration is frozen to zero. The real timing is
     # printed to the terminal and into the runtime line, which is where a human
     # reads it anyway. `wall_clock_s` is deliberately NOT in the manifest.
     def secs(value: float | None) -> float:

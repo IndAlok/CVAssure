@@ -1,11 +1,8 @@
-"""A minimal PNG writer. No Pillow in core.
+"""A minimal PNG writer. Pillow is not a core dependency.
 
-PIL would be the obvious choice and it is not a dependency. A stub needs a tiny
-solid-colour image so the report has a file to open, and a LINK figure needs two
-cropped images side by side. Both are small and both are just pixels.
-
-zlib and struct are stdlib. If a teammate needs real image decoding for pattern
-correlation, numpy handles it (see linking.py) and that stays out of core too.
+A stub writes a small solid-colour image so the report has a file to open. A
+link figure places two cropped images side by side. Both are written with zlib
+and struct from the standard library.
 """
 
 from __future__ import annotations
@@ -16,9 +13,7 @@ from pathlib import Path
 
 RGB = tuple[int, int, int]
 
-#: Team palette, from the plan. Blue and navy are the brand colours; red is only
-#: ever danger, green only ever safe. Lives here because the linker, the stubs
-#: and the images all draw, and one palette beats three copies.
+#: Report colours. Blue and navy are the default. Red is only for danger. Green is only for safe.
 BLUE = (0, 112, 192)
 NAVY = (31, 56, 100)
 RED = (192, 0, 0)

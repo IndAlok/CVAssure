@@ -1,1 +1,0 @@
-One offline command finishes all five checks, links the model trigger to the patch seen in samples from C-07, and prints its own verified report hash.

@@ -1,9 +1,7 @@
-"""Finding schema tests (D2).
+"""Finding schema tests.
 
-Valid fixtures are real files: they double as the reference examples in
-``contracts/FINDING.md`` and as the mock-up 1C shape. Invalid cases are a
-mutation table in the test rather than eight near-identical JSON files, so the
-failure reason sits next to the case that causes it.
+Valid fixtures live under `tests/fixtures/findings`. Invalid cases are built in
+the test.
 """
 
 from __future__ import annotations
@@ -58,7 +56,7 @@ def test_contract_schemas_on_disk_match_the_model() -> None:
 
 
 def test_at_least_six_valid_fixtures() -> None:
-    assert len(VALID) >= 6, f"plan asks for 6+, found {len(VALID)}: {[p.name for p in VALID]}"
+    assert len(VALID) >= 6, f"expected at least 6, found {len(VALID)}: {[p.name for p in VALID]}"
 
 
 @pytest.mark.parametrize("path", VALID, ids=lambda p: p.stem)

@@ -10,7 +10,7 @@
   "limitations": "Patch library covers 1 known trigger. Novel triggers are out of scope.",
   "disposition": "quarantine",
   "linked_findings": ["F-019"],
-  "detector": { "id": "data.patch_trigger", "version": "0.1.0", "owner": "P2" },
+  "detector": { "id": "data.patch_trigger", "version": "0.1.0", "owner": "data" },
   "source_id": "C-07",
   "class_label": 0,
   "sample_ids": ["s-0001", "s-0002", "s-0003"],

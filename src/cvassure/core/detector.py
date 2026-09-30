@@ -1,19 +1,17 @@
-"""The Detector contract (D3). Frozen day 1, tag ``contracts-v1``.
+"""Detector contract.
 
-A detector is a class with four ``ClassVar`` declarations and a ``run``. It
-returns a :class:`DetectorResult` holding Findings. It does not return dicts, it
-does not open sockets, it does not write outside ``ctx.out_dir``, and it does not
-read Person 5's ground-truth manifest.
+A detector is a class with class attributes and a `run` method. It returns a
+`DetectorResult` of Findings. It does not return dicts, it does not open sockets,
+it does not write outside `ctx.out_dir`, and it does not read a ground-truth
+attack manifest.
 
-Two rules the pipeline enforces for you, so your ``run`` stays short:
+The pipeline enforces two rules before and around `run`.
 
-* **Crash rule.** An exception in your ``run`` becomes one ``asset=system``
-  Finding naming you, and the run continues. You do not need your own try/except.
-* **Access rule.** If your ``requires`` is not a subset of the wrapper's declared
-  capabilities, the pipeline marks you ``skipped`` before ``run`` is called. Do
-  not pretend a method ran.
+An exception in `run` becomes one `asset=system` Finding that names the detector,
+and the run continues.
 
-A copy-paste stub lives in ``contracts/DETECTOR.md``.
+If `requires` is not a subset of the wrapper capabilities, the pipeline marks the
+detector `skipped` and does not call `run`. A missing wrapper is the same skip.
 """
 
 from __future__ import annotations
@@ -39,12 +37,7 @@ Capability = Literal["weights", "gradients", "activations", "logits", "query_onl
 
 @runtime_checkable
 class ModelWrapper(Protocol):
-    """What Person 3 promises. Person 1 only reads the first three members.
-
-    ``features``, ``gradients`` and friends return a typed ``Unavailable`` when
-    the tier does not allow them. That is Person 3's contract to honour; the
-    pipeline only asks :meth:`capabilities`.
-    """
+    """Methods the pipeline reads from a model wrapper."""
 
     def declare_access_tier(self) -> AccessTier: ...
 
@@ -55,7 +48,7 @@ class ModelWrapper(Protocol):
 
 @dataclass(frozen=True)
 class Sample:
-    """One row of the internal sample table. Built by the day-2 adapters."""
+    """One row of the internal sample table."""
 
     sample_id: str
     path: Path
@@ -135,7 +128,7 @@ class Detector(ABC):
     id: ClassVar[str]
     #: One of data | model | records | shift. Determines pipeline stage order.
     asset: ClassVar[str]
-    #: "P2" .. "P5", or "P1" for a governance check.
+    #: Package or component name, for example "data" or "model".
     owner: ClassVar[str]
     version: ClassVar[str]
     #: Wrapper capabilities needed. Empty means "works on any tier".
@@ -165,8 +158,7 @@ class Detector(ABC):
 def interface_errors(det: object) -> list[str]:
     """Registry check. Returns a list of contract violations, empty when fine.
 
-    Kept here rather than in the registry so the contract has one home and a
-    teammate can call it from their own test.
+    Kept next to the contract so tests can call it without importing the registry.
     """
     problems: list[str] = []
     for attr in ("id", "version", "owner"):

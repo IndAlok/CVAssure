@@ -20,8 +20,7 @@ from cvassure.core.errors import ConfigError
 from cvassure.core.hashing import canonical_sha256
 
 MAX_CONFIG_BYTES = 512 * 1024
-# ponytail: a fixed ceiling, not a quota system. Raise it only if a real config
-# needs it; a 512 KB YAML file with a billion detectors is an attack, not a use case.
+# A fixed ceiling. Raise it only if a real config needs more than 512 KB.
 UNKNOWN_TOP_LEVEL = "unknown top-level key"
 
 

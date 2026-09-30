@@ -1,16 +1,14 @@
-"""Offline HTML report. Fallback renderer until Person 4's lands.
+"""Offline HTML report.
 
-Reads only `out/`, writes `out/report.html`, no network, no CDN, no remote font,
-no remote image. It must open from a `file://` URL on a machine with no network,
-which is a stated test: the generated HTML is grepped for `http://` and
+Reads only the run directory and writes `report.html`. No network, no CDN, no
+remote font, no remote image. Generated HTML must not contain `http://` or
 `https://` asset URLs.
 
-Person 4's `render_report(out_dir)` replaces this wholesale. The check is
-import-based, so nothing in the pipeline changes when theirs lands.
+`cvassure.provenance.render_report` replaces this when that function imports.
 
-Two hashes, and the reason matters. An HTML file cannot contain its own digest, so
-the header shows `payload_sha256` (of the *data*) and the CLI prints
-`file_sha256` (of the *bytes*) after this returns.
+An HTML file cannot contain its own digest. The header shows `payload_sha256` of
+the findings, coverage, and manifest. The CLI prints `file_sha256` of the HTML
+bytes after this returns.
 """
 
 from __future__ import annotations
@@ -70,13 +68,13 @@ def _badge(disposition: str) -> str:
 def _findings_table(findings: Sequence[Finding]) -> str:
     if not findings:
         return (
-            "<p>No findings. This means nothing was flagged; it is not a clean bill of health.</p>"
+            "<p>No findings. This means nothing was flagged. It is not a clean bill of health.</p>"
         )
     rows = []
     for f in sorted(findings, key=lambda x: x.id or ""):
-        ev = "<br>".join(f"<code>{_esc(p)}</code>" for p in f.evidence) or "—"
-        tags = " ".join(f"<code>{_esc(t)}</code>" for t in f.tags) or "—"
-        linked = ", ".join(f.linked_findings) or "—"
+        ev = "<br>".join(f"<code>{_esc(p)}</code>" for p in f.evidence) or ", "
+        tags = " ".join(f"<code>{_esc(t)}</code>" for t in f.tags) or ", "
+        linked = ", ".join(f.linked_findings) or ", "
         stub = " <span class='badge stub'>STUB</span>" if f.stub else ""
         esc = ""
         if f.escalation and f.escalation.escalated:
@@ -119,8 +117,8 @@ def _coverage_section(cov: Coverage) -> str:
         rows.append(
             f"<tr><td>{_esc(r.attack_class)}</td>"
             f"<td><span style='{s}'>{_esc(r.status)}</span></td>"
-            f"<td>{_esc(r.measured or '—')}</td>"
-            f"<td>{_esc(', '.join(r.access_levels) or '—')}</td>"
+            f"<td>{_esc(r.measured or ', ')}</td>"
+            f"<td>{_esc(', '.join(r.access_levels) or ', ')}</td>"
             f"<td class='lim'>{_esc(r.reason)}</td></tr>"
         )
     warn = f"<div class='warn'>{_esc(cov.warning)}</div>" if cov.warning else ""
@@ -147,7 +145,7 @@ def render_report(
     *,
     payload_sha256: str,
 ) -> Path:
-    """Write the fallback report. Person 4 replaces this file's caller, not core."""
+    """Write the built-in report."""
     disposition_counts: dict[str, int] = {}
     for f in findings:
         disposition_counts[f.disposition] = disposition_counts.get(f.disposition, 0) + 1
@@ -181,7 +179,7 @@ CPU-only, offline, air-gapped</p>
 
 
 def render_from_out_dir(out_dir: Path) -> Path | None:
-    """Person 4's hook. Returns None when their renderer is not importable."""
+    """Return a path from `cvassure.provenance.render_report`, or None."""
     import importlib
 
     for module_name in ("cvassure.provenance.report",):
