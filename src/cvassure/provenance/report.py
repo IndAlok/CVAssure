@@ -196,7 +196,40 @@ details[open] summary{{margin-bottom:8px}}
 /* Two-column layout */
 .two-col{{display:grid;grid-template-columns:1fr 1fr;gap:20px}}
 @media(max-width:900px){{.two-col{{grid-template-columns:1fr}}}}
+.three-col{{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px}}
+@media(max-width:900px){{.three-col{{grid-template-columns:1fr}}}}
 .bottom-row{{display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap}}
+
+/* Top bar */
+.top-bar {{
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}}
+.top-bar-text {{
+  display: flex;
+  flex-direction: column;
+}}
+.top-bar-right {{
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}}
+.top-bar-meta {{
+  color: var(--muted);
+  font-size: 12px;
+  font-family: ui-monospace, monospace;
+}}
+.top-bar-qr img {{
+  width: 80px;
+  height: 80px;
+  border-radius: 6px;
+  margin-top: 8px;
+  border: 2px solid var(--border);
+  display: block;
+}}
+
 .qr-box{{flex-shrink:0}}
 .qr-box img{{border-radius:8px;border:2px solid var(--border);display:block}}
 """
@@ -341,7 +374,7 @@ def _timeline_svg(findings: list[dict[str, Any]]) -> str:
     inner += f"<text x='{pad_left}' y='{H}' font-size='10' fill='var(--muted)'>batch B1 ... B8</text>\n"
     
     return (
-        f"<svg viewBox='0 0 {W} {H}' width='100%' style='max-width:100%'>\n  {inner}\n</svg>"
+        f"<svg viewBox='0 0 {W} {H}' width='100%' height='220' preserveAspectRatio='xMidYMid meet' style='max-width:100%; display:block'>\n  {inner}\n</svg>"
     )
 
 
@@ -729,7 +762,7 @@ def render_report(out_dir: Path) -> Path:
     </div>
   </div>
   <div class="top-bar-right">
-    <span class="top-bar-meta">report sha256: {_e(report_sha[:16])}</span>
+    <span class="top-bar-meta" style="margin-bottom:0">payload sha256: {_e(payload_sha)}</span>
     <div class="top-bar-qr">
       {qr_html_only}
     </div>
@@ -792,7 +825,6 @@ def render_report(out_dir: Path) -> Path:
 </div>
 
 <div class="bottom-row">
-  {qr_html}
   <div class="card" style="flex:1;min-width:260px">
     <h2>Provenance &amp; Chain</h2>
     {_provenance_panel(manifest, chain_ok)}
