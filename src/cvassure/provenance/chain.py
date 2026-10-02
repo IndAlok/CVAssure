@@ -45,9 +45,10 @@ class SignedChain:
     """Append-only signed audit log chain.
 
     Loads Ed25519 keys from ``private_key_path`` and ``public_key_path``.
-    If neither is given, an ephemeral keypair is generated and a warning
-    is emitted — the log is still signed, but the key is not persisted
-    for later verification by a third party.
+    A public key alone opens the log for verification. If neither path is
+    given, an ephemeral keypair is generated and the public key is written
+    next to the log (``<log>.pub``) so a later process can verify with
+    ``SignedChain``. The private key is not kept.
 
     Optionally builds a Merkle tree (``use_merkle=True``) over the
     entry_hash values. The Merkle root is included in the ``run_end``
@@ -72,6 +73,7 @@ class SignedChain:
         self._prev = GENESIS
         self._merkle = None
         self._ephemeral_dir = None
+        persist_public = False
 
         # Key setup
         if private_key_path and public_key_path:
@@ -80,10 +82,14 @@ class SignedChain:
         elif private_key_path:
             self._sk = load_private(private_key_path)
             self._vk = self._sk.verify_key
+        elif public_key_path:
+            # Verify-only. append() needs the private key.
+            self._sk = None
+            self._vk = load_public(public_key_path)
         else:
             warnings.warn(
                 "No key paths given to SignedChain. Generating an ephemeral keypair. "
-                "The log is signed, but verification requires the ephemeral public key.",
+                "The public key is saved next to the log for SignedChain verification.",
                 stacklevel=2,
             )
             from cvassure.provenance.keys import generate_keypair
@@ -93,6 +99,7 @@ class SignedChain:
             generate_keypair(ep)
             self._sk = load_private(ep.with_suffix(".key"))
             self._vk = load_public(ep.with_suffix(".pub"))
+            persist_public = True
 
         self._pubkey_fp = fingerprint(bytes(self._vk))
 
@@ -104,6 +111,10 @@ class SignedChain:
 
         # Log file setup
         path.parent.mkdir(parents=True, exist_ok=True)
+        if persist_public:
+            # Keep the public key after the ephemeral private key is deleted.
+            pub = self.path.with_suffix(".pub")
+            pub.write_text(bytes(self._vk).hex() + "\n", encoding="utf-8")
         if fresh and path.exists():
             path.unlink()
         elif path.exists() and path.stat().st_size > 0:
@@ -146,6 +157,9 @@ class SignedChain:
     def append(self, event: str, data: Mapping[str, Any]) -> Mapping[str, Any]:
         """Build, sign, and fsync one entry."""
         from cvassure.provenance.keys import sign
+
+        if self._sk is None:
+            raise RuntimeError("SignedChain has no private key; cannot append")
 
         self._seq += 1
         entry: dict[str, Any] = {
