@@ -223,3 +223,38 @@ def test_ephemeral_chain_still_signs(tmp_path):
     lines = log.read_text(encoding="utf-8").splitlines()
     entry = json.loads(lines[0])
     assert "sig" in entry and entry["sig"]
+    assert log.with_suffix(".pub").is_file()
+
+
+def test_ephemeral_log_verifies_later_with_signedchain(tmp_path):
+    """The public key survives the writer so a later SignedChain can verify."""
+    import warnings
+
+    from cvassure.core.audit import verify_log
+    from cvassure.provenance.chain import SignedChain
+
+    log = tmp_path / "audit.log"
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        chain = SignedChain(log)
+        chain.append("run_start", {"i": 1})
+        chain.append("run_end", {})
+        head = chain.head()
+    del chain
+
+    pub = log.with_suffix(".pub")
+    later = SignedChain(log, public_key_path=pub, fresh=False)
+    assert later.verify() is True
+    assert later.head() == head
+
+    res = verify_log(log, expected_head=head)
+    assert res.ok, res.reason
+    assert res.head == head
+
+    lines = log.read_text(encoding="utf-8").splitlines()
+    entry = json.loads(lines[0])
+    entry["data"]["i"] = 999
+    lines[0] = json.dumps(entry)
+    log.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    tampered = verify_log(log, expected_head=head)
+    assert tampered.ok is False

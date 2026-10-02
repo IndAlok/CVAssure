@@ -37,7 +37,7 @@ jobs:
 
       - name: Verify the chain and the report hashes
         run: |
-          python -m cvassure.core.cli verify-log out/audit.log --manifest out/run_manifest.json
+          python -m cvassure.core.cli verify-log out/audit.log --manifest out/run_manifest.json --pubkey out/audit.pub
           python -m cvassure.core.cli verify-report out/report.html --out out
 
       - name: Assert the generated HTML is offline

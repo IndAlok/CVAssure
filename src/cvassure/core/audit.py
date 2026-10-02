@@ -272,6 +272,64 @@ def verify_file(
     return VerifyResult(True, "chain verified", n, prev)
 
 
+def _first_entry_signed(path: Path) -> bool:
+    if not path.is_file():
+        return False
+    with open(path, encoding="utf-8") as fh:
+        for line in fh:
+            if not line.strip():
+                continue
+            try:
+                entry = json.loads(line)
+            except json.JSONDecodeError:
+                return False
+            sig = entry.get("sig")
+            return bool(sig)
+    return False
+
+
+def verify_log(path: Path, *, expected_head: str | None = None) -> VerifyResult:
+    """Verify a log with the chain that wrote it.
+
+    A signed log is checked by ``SignedChain`` using the public key saved
+    beside the log. An unsigned log uses the local SHA-256 chain.
+    """
+    if not _first_entry_signed(path):
+        return verify_file(path, expected_head=expected_head)
+
+    pub = path.with_suffix(".pub")
+    if not pub.is_file():
+        return VerifyResult(
+            False,
+            f"signed log is missing its public key ({pub.name}); cannot use SignedChain",
+            0,
+            GENESIS,
+        )
+    try:
+        from cvassure.provenance.chain import SignedChain as ProvenanceSignedChain
+    except Exception as exc:
+        return VerifyResult(False, f"SignedChain is not available: {exc}", 0, GENESIS)
+
+    try:
+        chain = ProvenanceSignedChain(path, public_key_path=pub, fresh=False)
+        ok = bool(chain.verify())
+        head = str(chain.head())
+    except Exception as exc:
+        return VerifyResult(False, f"SignedChain verification failed: {exc}", 0, GENESIS)
+
+    n = len(read_entries(path))
+    if not ok:
+        return VerifyResult(False, "SignedChain verification failed", n, head)
+    if expected_head and head != expected_head:
+        return VerifyResult(
+            False,
+            f"chain head {head[:12]} does not match the recorded {expected_head[:12]}",
+            n,
+            head,
+        )
+    return VerifyResult(True, "chain verified", n, head)
+
+
 def read_entries(path: Path) -> list[dict[str, Any]]:
     if not path.is_file():
         return []
