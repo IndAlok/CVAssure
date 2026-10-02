@@ -32,7 +32,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "tests"))
 
-from cvassure.core.audit import verify_file  # noqa: E402
+from cvassure.core.audit import verify_log  # noqa: E402
 from fixtures.synthetic_scenario import build_all  # noqa: E402
 
 MIN_RUNS = 5
@@ -180,7 +180,7 @@ def main() -> int:
     if set(verdicts.values()) != {"drift", "manipulation"}:
         failures.append(f"shift verdicts {verdicts}, expected one drift and one manipulation")
 
-    verification = verify_file(out / "audit.log", expected_head=manifest.get("audit_head"))
+    verification = verify_log(out / "audit.log", expected_head=manifest.get("audit_head"))
     if not verification.ok:
         failures.append(f"audit chain did not verify: {verification.reason}")
 
